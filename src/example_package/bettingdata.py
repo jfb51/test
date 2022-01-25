@@ -8,7 +8,7 @@ from typing import Optional
 import pandas as pd
 
 
-class BettingData():
+class BettingData:
     def __init__(self, from_pickle=False, market_path=None, nautilus_path=None, betfair_path=None):
         if from_pickle:
             self.nautilus_file = pd.read_pickle('{}'.format(nautilus_path))  # this gives the nautilus feed.
