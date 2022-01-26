@@ -317,7 +317,6 @@ class HistoricMatchSimulator:
         return score_to_prob_map
 
     @staticmethod
-    @dask.delayed
     def smooth_probabilities(score_to_prob_map, n):
         prob_array = np.array([p[0] for p in score_to_prob_map.values()])
         filtered_probabilities = np.clip(savgol_filter(prob_array, 21, 3), 0, 1)
