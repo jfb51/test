@@ -5,7 +5,7 @@ from scipy.signal import savgol_filter
 from collections import OrderedDict
 from team import SimpleHistoricTeam
 import copy
-from dask import delayed
+import dask
 
 
 class HistoricMatchSimulator:
