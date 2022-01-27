@@ -1,29 +1,25 @@
-import numpy as np
-from operator import attrgetter
-from collections import Counter
-from scipy.signal import savgol_filter
-from collections import OrderedDict
 from team import SimpleHistoricTeam
 import copy
+from scipy.signal import savgol_filter
+from collections import OrderedDict
+import numpy as np
+from collections import Counter
+from operator import attrgetter
 
 
 class HistoricMatchSimulator:
-    def __init__(self, match_id, match_dict, match_df, ball_by_ball_df, wicket_models, run_models, wide_models,
-                 nb_models):
+    def __init__(self, match_id, match_row, historic_match_data, player_info,
+                 wicket_models, run_models, wide_models, nb_models):
         self.match_id = str(match_id)
         self.wicket_models = wicket_models
         self.run_models = run_models
         # self.bowling_model = bowling_model
         self.wide_models = wide_models
         self.nb_models = nb_models
-        self.match_dict = match_dict
-        self.match_df = match_df
-        self.ball_by_ball_df = ball_by_ball_df
-        self.match_row = self.match_df.loc[self.match_id]
-        self.historic_match_data = self.ball_by_ball_df[lambda x: x.match_id == int(self.match_id)].sort_values(
-            ['innings', 'legal_balls_in_innings_b4b', 'innings_runs_b4b'])
+        self.match_row = match_row
+        self.historic_match_data = historic_match_data
         self.bowling_style_dict = self.create_historic_bowling_style()
-        self.player_info = self.match_dict[self.match_id]['info']['players']
+        self.player_info = player_info
 
         # initialise match state
         self.innings = 1
@@ -260,6 +256,8 @@ class HistoricMatchSimulator:
 
     # for an historic match, during the second innings, what is p(win|state of the game) for each ball in the innings?
     # note we cannot SavGol smooth these probabilities since this would use future information.
+
+
     def historic_second_innings_sim(self, n, verbose=False):
         self.innings = 2
         second_innings_data = self.historic_match_data[lambda x: x.innings == self.innings].to_dict(orient='records')
@@ -284,6 +282,7 @@ class HistoricMatchSimulator:
         return second_innings_win_pct
 
     # for a harcoded array of first innings scores, what's the simulated probability the chasing team will chase them?
+
     def precalc_win_probs_for_score_array(self, n, smooth=True, verbose=False):
         self.innings = 2
         j = 0
@@ -321,6 +320,7 @@ class HistoricMatchSimulator:
     # for each ball in the first innings of an historic match, simulate until the end of the innings
     # and record the distribution of scores - eventually multiply this with score_map to get a probability of winning
     # for each ball in the first innings.
+
     def first_innings_scores(self, n):
         j = 0
         scores = []

@@ -45,7 +45,7 @@ class SimpleHistoricTeam:
                     if self.simulated_target is not None:
                         self.bwl_total = self.simulated_target
                     else:
-                        self.bwl_total = self.match_row.first_innings_score
+                        self.bwl_total = self.match_row['first_innings_score']
                     self.bwl_wkts = 'N/A'  # can get this if necessary
                     #                     self.bowler = self.initial_match_state.bowler
                     self.bat_bwl = 'bat'
@@ -66,7 +66,7 @@ class SimpleHistoricTeam:
                     if self.simulated_target is not None:
                         self.bat_total = self.simulated_target
                     else:
-                        self.bat_total = self.match_row.first_innings_score
+                        self.bat_total = self.match_row['first_innings_score']
                     self.bat_wkts = 'N/A'
                     self.bat_bwl = 'bowl'
                     self.bwl_total = self.initial_match_state['innings_runs_b4b']
