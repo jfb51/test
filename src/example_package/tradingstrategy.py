@@ -1,9 +1,9 @@
-from matchsim import HistoricMatchSimulator
-from bettingdata import BettingData
+from example_package.matchsim import HistoricMatchSimulator
+from example_package.bettingdata import BettingData
 import numpy as np
 import pandas as pd
 import requests
-from util import kelly_bet
+from example_package.util import kelly_bet
 
 
 class TradingStrategy:
