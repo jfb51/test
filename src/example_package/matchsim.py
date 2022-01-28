@@ -1,4 +1,4 @@
-from example_package.team import SimpleHistoricTeam
+from team import SimpleHistoricTeam
 import copy
 from scipy.signal import savgol_filter
 from collections import OrderedDict
