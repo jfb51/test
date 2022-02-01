@@ -63,7 +63,7 @@ class HistoricMatchSimulator:
             else:
                 self.change_inns()
 
-        while (self.over < 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
+        while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                           <= self.bowling_team.bat_total):
             self.sim_over()
 
@@ -256,7 +256,6 @@ class HistoricMatchSimulator:
 
     # for an historic match, during the second innings, what is p(win|state of the game) for each ball in the innings?
     # note we cannot SavGol smooth these probabilities since this would use future information.
-
 
     def historic_second_innings_sim(self, n, verbose=False):
         self.innings = 2
