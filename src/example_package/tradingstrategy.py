@@ -7,7 +7,8 @@ from example_package.util import kelly_bet
 
 
 class TradingStrategy:
-    def __init__(self, match_id, series_id, wicket_model, runs, wms, nbs, num_sims,
+    def __init__(self, match_id, series_id, match_row, historic_match_data, player_info,
+                 wicket_model, runs, wms, nbs, num_sims,
                  from_pickle, nautilus_path, smooth_probs=True):
         self.match_id = match_id
         self.series_id = series_id
@@ -15,7 +16,8 @@ class TradingStrategy:
         self.smooth_probs = smooth_probs
         self.nautilus_path = nautilus_path
         self.from_pickle = from_pickle
-        self.match = HistoricMatchSimulator(match_id, wicket_model, runs, wms, nbs)
+        self.match = HistoricMatchSimulator(match_id, match_row, historic_match_data, player_info,
+                                            wicket_model, runs, wms, nbs)
         self.bd = BettingData(from_pickle=self.from_pickle, nautilus_path=self.nautilus_path)
         self.betting_data = self.bd.combine_trade_and_market_df()
         self.betting_reference_team = self.bd.team_map[self.bd.first_team_id]
