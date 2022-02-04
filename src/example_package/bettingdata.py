@@ -1,5 +1,6 @@
 # zeljko-betting-data/dap/PRO/2020/Jan/12/29647451/1.167243110.bz2
 from requests import Session
+import requests
 import copy
 import numpy as np
 import pathlib
@@ -9,22 +10,19 @@ import pandas as pd
 
 
 class BettingData:
-    def __init__(self, from_pickle=False, market_path=None, nautilus_path=None, betfair_path=None):
+    def __init__(self, from_pickle=False, market_path=None, nautilus_path=None):
         if from_pickle:
             self.nautilus_file = pd.read_pickle('{}'.format(nautilus_path))  # this gives the nautilus feed.
-            self.betfair_file = pd.read_pickle('{}'.format(betfair_path))  # this is raw betfair
         else:
             self.market_path = market_path
             r = requests.get("http://100.125.47.118:8001/v1/nautilus/feed/?filename=/{}".format(market_path))
-            self.raw_data = pickle.loads(r.content)  # this gives the nautilus feed.
-            self.dap_file = BettingDataClient().betfair.read_dap_file('{}'.format(market_path))
+            self.nautilus_file = pickle.loads(r.content)  # this gives the nautilus feed.
         self.order_book_deltas = [element for element in self.nautilus_file if
                                   type(element).__name__ == 'OrderBookDeltas']
         self.trades = [element for element in self.nautilus_file if type(element).__name__ == 'TradeTick']
-        self.runners = self.betfair_file[0]['mc'][0]['marketDefinition']['runners']
-        self.team_map = {}
-        for runner in self.runners:
-            self.team_map[runner['id']] = runner['name']
+        self.team_ids = [self.nautilus_file[0].selection_id, self.nautilus_file[1].selection_id]
+        self.team_names = [self.nautilus_file[0].selection_name, self.nautilus_file[1].selection_name]
+        self.team_map = dict(zip(self.team_ids, self.team_names))
         self.first_team_id = str(list(self.team_map.keys())[0])
 
     def combine_odds(self):

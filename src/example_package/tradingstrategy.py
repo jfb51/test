@@ -8,24 +8,19 @@ from example_package.util import kelly_bet
 
 class TradingStrategy:
     def __init__(self, match_id, series_id, wicket_model, runs, wms, nbs, num_sims,
-                 from_pickle, nautilus_path, betfair_path, smooth_probs=True):
+                 from_pickle, nautilus_path, smooth_probs=True):
         self.match_id = match_id
         self.series_id = series_id
         self.num_sims = num_sims
         self.smooth_probs = smooth_probs
         self.nautilus_path = nautilus_path
-        self.betfair_path = betfair_path
         self.from_pickle = from_pickle
         self.match = HistoricMatchSimulator(match_id, wicket_model, runs, wms, nbs)
-        self.bd = BettingData(from_pickle=self.from_pickle, nautilus_path=self.nautilus_path,
-                              betfair_path=self.betfair_path)
+        self.bd = BettingData(from_pickle=self.from_pickle, nautilus_path=self.nautilus_path)
         self.betting_data = self.bd.combine_trade_and_market_df()
-        for r in self.bd.runners:
-            if str(r['id']) == self.bd.first_team_id:
-                self.betting_reference_team = r['name']
-                break
-        if self.betting_reference_team != self.match.chasing_team:
-            self.negate_sim_probabilities = True
+        self.betting_reference_team = self.bd.team_map[self.bd.first_team_id]
+        if self.betting_reference_team!=self.match.chasing_team:
+            self.negate_sim_probabilities=True
 
     def simulate_historic_match(self):
         # these probabilities are in terms of the chasing team - need to make this consistent with the odds information
