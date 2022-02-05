@@ -74,6 +74,7 @@ class TradingStrategy:
         return match_df
 
     def run_simulation_and_wagering(self, pass_sim_data=False, sim_data=None):
+        EPS = 1e-5
         if not pass_sim_data:
             simulated_probabilities = self.simulate_historic_match()
         else:
@@ -81,8 +82,8 @@ class TradingStrategy:
         merged_data = self.merge_comms_playing_and_betting_data()
         merged_data['estimated_probability_lower'] = simulated_probabilities[0]
         merged_data['estimated_probability_upper'] = simulated_probabilities[1]
-        merged_data['decimal_bid'] = merged_data.best_combined_bid.apply(lambda x: 1 / x)
-        merged_data['decimal_offer'] = merged_data.best_combined_offer.apply(lambda x: 1 / x)
+        merged_data['decimal_bid'] = merged_data.best_combined_bid.apply(lambda x: 1 / (x+EPS))
+        merged_data['decimal_offer'] = merged_data.best_combined_offer.apply(lambda x: 1 / (x+EPS))
         merged_data['edge'] = np.maximum(merged_data.estimated_probability_lower - merged_data.best_combined_offer,
                                          merged_data.best_combined_bid - merged_data.estimated_probability_upper)
         merged_data['side'] = ["Back" if pl > o else "Lay" if pu < b else "None" for (b, o, pl, pu) in
@@ -100,4 +101,3 @@ class TradingStrategy:
         merged_data['cumulative_pnl'] = np.cumsum(merged_data.period_pnl)
 
         return merged_data
-
