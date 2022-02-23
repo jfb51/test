@@ -9,8 +9,7 @@ from operator import attrgetter
 
 class HistoricMatchSimulator:
     def __init__(self, match_id, match_row, historic_match_data, career_bowling_data,
-                 career_batting_data, player_info,
-                 wicket_models, run_models, wide_models, nb_models, bowling_models):
+                 career_batting_data, wicket_models, run_models, wide_models, nb_models, bowling_models):
         self.bowler = None
         self.match_id = str(match_id)
         self.wicket_models = wicket_models
@@ -23,7 +22,6 @@ class HistoricMatchSimulator:
         self.career_bowling_data = career_bowling_data
         self.career_batting_data = career_batting_data
         # self.bowling_style_dict = self.create_historic_bowling_style()
-        self.player_info = player_info
         self.bowling_plan = []
         # initialise match state
         self.innings = 1
@@ -35,11 +33,11 @@ class HistoricMatchSimulator:
         teams.remove(toss_winner)
         toss_loser = teams[0]
         if toss['decision'] == 'field':
-            self.batting_team = SimpleHistoricTeam(toss_loser, self.player_info, self.match_row)
-            self.bowling_team = SimpleHistoricTeam(toss_winner, self.player_info, self.match_row)
+            self.batting_team = SimpleHistoricTeam(toss_loser, self.match_row)
+            self.bowling_team = SimpleHistoricTeam(toss_winner, self.match_row)
         else:
-            self.batting_team = SimpleHistoricTeam(toss_winner, self.player_info, self.match_row)
-            self.bowling_team = SimpleHistoricTeam(toss_loser, self.player_info, self.match_row)
+            self.batting_team = SimpleHistoricTeam(toss_winner, self.match_row)
+            self.bowling_team = SimpleHistoricTeam(toss_loser, self.match_row)
         self.setting_team = self.batting_team.name
         self.chasing_team = self.bowling_team.name
 
@@ -53,10 +51,10 @@ class HistoricMatchSimulator:
             self.innings = initial_match_state['innings']
             self.over = initial_match_state['over']
             self.ball = initial_match_state['legal_balls_in_innings_b4b'] % 6
-            self.batting_team = SimpleHistoricTeam(initial_match_state['batting_team'], self.player_info,
+            self.batting_team = SimpleHistoricTeam(initial_match_state['batting_team'],
                                                    self.match_row, initial_match_state, simulated_target)
             # what's the first innings total in this case?
-            self.bowling_team = SimpleHistoricTeam(initial_match_state['bowling_team'], self.player_info,
+            self.bowling_team = SimpleHistoricTeam(initial_match_state['bowling_team'],
                                                    self.match_row, initial_match_state, simulated_target)
 
             if self.innings == 1:

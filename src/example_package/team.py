@@ -2,12 +2,17 @@ import numpy as np
 
 
 class SimpleHistoricTeam:
-    def __init__(self, name, player_info, match_row, initial_match_state=None,
+    def __init__(self, name, match_row, initial_match_state=None,
                  simulated_target=None):
-        self.name = name  # team name
-        self.bat_order = player_info[self.name]
         self.match_row = match_row
-        self.order = {i + 1: x for i, x in enumerate(self.bat_order)}  # batting order
+        self.name = name  # team name
+
+        if self.name == self.match_row['setting_teams']:
+            self.players = self.match_row['setting_players']
+        else:
+            self.players = self.match_row['chasing_players']
+
+        self.order = {i + 1: x['name'] for i, x in enumerate(self.players)}  # batting order
         self.initial_match_state = initial_match_state
         self.simulated_target = simulated_target
 
@@ -47,7 +52,6 @@ class SimpleHistoricTeam:
                     else:
                         self.bwl_total = self.match_row['first_innings_score']
                     self.bwl_wkts = 'N/A'  # can get this if necessary
-                    #                     self.bowler = self.initial_match_state.bowler
                     self.bat_bwl = 'bat'
             # if I'm the bowling team
             else:
@@ -58,7 +62,7 @@ class SimpleHistoricTeam:
                     self.bat_bwl = 'bowl'
                     self.bwl_total = self.initial_match_state['innings_runs_b4b']
                     self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
-                    self.bowler = self.initial_match_state['bowler']
+                    # self.bowler = self.initial_match_state['bowler']
                     self.onstrike = self.order[1]
                     self.offstrike = self.order[2]
                 # and it's the second innings, then I've batted already
@@ -73,7 +77,6 @@ class SimpleHistoricTeam:
                     self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
                     self.onstrike = self.order[1]
                     self.offstrike = self.order[2]
-
 
     def nxt_bowler(self, first_over=False):
         # module to choose next bowler
