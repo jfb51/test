@@ -8,19 +8,23 @@ from operator import attrgetter
 
 
 class HistoricMatchSimulator:
-    def __init__(self, match_id, match_row, historic_match_data, player_info,
-                 wicket_models, run_models, wide_models, nb_models):
+    def __init__(self, match_id, match_row, historic_match_data, career_bowling_data,
+                 career_batting_data, player_info,
+                 wicket_models, run_models, wide_models, nb_models, bowling_models):
+        self.bowler = None
         self.match_id = str(match_id)
         self.wicket_models = wicket_models
         self.run_models = run_models
-        # self.bowling_model = bowling_model
-        self.wide_models = wide_models
+        self.bowling_models = bowling_models
+        self.wide_model = wide_models
         self.nb_models = nb_models
         self.match_row = match_row
         self.historic_match_data = historic_match_data
-        self.bowling_style_dict = self.create_historic_bowling_style()
+        self.career_bowling_data = career_bowling_data
+        self.career_batting_data = career_batting_data
+        # self.bowling_style_dict = self.create_historic_bowling_style()
         self.player_info = player_info
-
+        self.bowling_plan = []
         # initialise match state
         self.innings = 1
         self.over = 1
@@ -55,6 +59,15 @@ class HistoricMatchSimulator:
             self.bowling_team = SimpleHistoricTeam(initial_match_state['bowling_team'], self.player_info,
                                                    self.match_row, initial_match_state, simulated_target)
 
+            if self.innings == 1:
+                self.setting_team = self.batting_team.name
+                self.chasing_team = self.bowling_team.name
+            else:
+                self.chasing_team = self.batting_team.name
+                self.setting_team = self.bowling_team.name
+
+        self.bowling_plan = self.sim_bowlers_for_innings() #returns a list of bowlers to bowl out the remainder
+
         while self.innings == 1:
             while (self.over <= 20) and (self.batting_team.bat_wkts < 10):
                 self.sim_over()
@@ -62,9 +75,10 @@ class HistoricMatchSimulator:
                 return [self.batting_team.name, self.batting_team.bat_total, self.batting_team.bat_wkts]
             else:
                 self.change_inns()
+                self.bowling_plan = self.sim_bowlers_for_innings()
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
-                                                                          <= self.bowling_team.bat_total):
+                                                                           <= self.bowling_team.bat_total):
             self.sim_over()
 
         if self.batting_team.bat_total > self.bowling_team.bat_total:
@@ -107,25 +121,25 @@ class HistoricMatchSimulator:
 
         # wides
         for model in self.wide_models:
-            if model.condition(self) == True:
+            if model.condition(self):
                 break
         p_wide = model.lookup_dict[attrgetter(*model.model_variables)(self)]
 
         # nb
         for model in self.nb_models:
-            if model.condition(self) == True:
+            if model.condition(self):
                 break
         p_no_ball = model.lookup_dict[attrgetter(*model.model_variables)(self)]
 
         # wickets
         for model in self.wicket_models:
-            if model.condition(self) == True:
+            if model.condition(self):
                 break
         p_wicket = model.lookup_dict[attrgetter(*model.model_variables)(self)]
 
         # runs
         for model in self.run_models:
-            if model.condition(self) == True:
+            if model.condition(self):
                 break
         p_runs = model.lookup_dict[attrgetter(*model.model_variables)(self)]
 
@@ -204,14 +218,10 @@ class HistoricMatchSimulator:
         # module to simulate an over
         while (self.ball < 6) and (self.batting_team.bat_wkts < 10) and \
                 ((self.innings == 1) or (self.batting_team.bat_total <= self.bowling_team.bat_total)):
-            try:
-                # what is the current bowler's style?
-                # this will acutally be faster with a simulation.
-                self.is_spin = self.bowling_style_dict[(self.innings, self.over)]
-            except:
-                self.is_spin = np.random.choice([0, 1], 1)[0]
-            bat = self.batting_team.onstrike
-            res = self.sim_ball()
+
+            self.bowler = self.bowling_plan[self.over-1]
+            # self.batting_team.onstrike
+            self.sim_ball()
 
         self.ball = 0
 
@@ -247,12 +257,81 @@ class HistoricMatchSimulator:
         self.ball = 0
         self.innings = 2
 
-    def create_historic_bowling_style(self):
-        match_dict = self.historic_match_data.to_dict(orient='records')
-        bowling_style_dict = {}
-        for element in match_dict:
-            bowling_style_dict[(element['innings'], element['over'])] = element['is_spin']
-        return bowling_style_dict
+    # def create_historic_bowling_style(self):
+    #     match_dict = self.historic_match_data.to_dict(orient='records')
+    #     bowling_style_dict = {}
+    #     for element in match_dict:
+    #         bowling_style_dict[(element['innings'], element['over'])] = element['is_spin']
+    #     return bowling_style_dict
+
+    def sim_bowlers_for_innings(self):
+        # module to simulate bowlers who will bowl throughout the innings.
+        # NB this simple at the moment, we don't change in response to the progression of the innings yet.
+        max_possible_overs = 4
+        bowled_over_cols = ['bowled_over_{}'.format(i) for i in range(1, 21)]
+        overs_bowled_cols = ['overs_bowled_after_{}'.format(i) for i in range(1, 21)]
+        irl_columns = ['bowled_over_{}_irl'.format(i) for i in range(1, 21)]
+        irl_ob_columns = ['overs_bowled_after_{}_irl'.format(i) for i in range(1, 21)]
+
+        if self.innings == 1:
+            potential_bowlers = self.match_row['chasing_bowlers']
+        else:
+            potential_bowlers = self.match_row['setting_bowlers']
+
+        potential_bowlers = [bowler['name'] for bowler in potential_bowlers]
+        bowler_careers = self.career_bowling_data[lambda x: x.index.isin(potential_bowlers)]
+
+        for column in bowled_over_cols:
+            bowler_careers = bowler_careers.rename(columns={column: '{}_irl'.format(column)})
+
+        # special case is very first ball, no one has been picked to bowl
+        if ~(self.over == 1 & self.ball == 0):
+            bowler_careers[bowled_over_cols[:self.over]] = bowler_careers[irl_columns[:self.over]]
+            bowler_careers[overs_bowled_cols[:self.over]] = bowler_careers[irl_ob_columns[:self.over]]
+            counter = 0
+        else:
+            outcome = bowler_careers[lambda x: x['bowled_over_{}'.format(self.over)]['name']]
+            counter = self.over
+
+        # drop any bowlers who have bowled out
+        bowler_careers = bowler_careers.drop(
+            bowler_careers[bowler_careers['overs_bowled_after_{}'.format(self.over)] == max_possible_overs].index)
+
+        remaining_bowlers = []
+
+        for i in range(counter + 1, 21):
+            model = self.bowling_models['bowling_model_{}'.format(i)]
+            regressor_names = model.model.exog_names[1:]
+            if i == 1:
+                bowler_prob = model.predict(bowler_careers[regressor_names].fillna(0))
+                bowler_prob = bowler_prob / sum(bowler_prob)
+                outcome = np.random.choice(a=bowler_prob.index, size=1, p=bowler_prob.values)[0]
+                bowler_careers.loc[outcome, 'bowled_over_{}'.format(i)] = 1
+                bowler_careers.loc[outcome, 'overs_bowled_after_{}'.format(i)] = 1
+                bowler_careers['bowled_over_{}'.format(i)] = bowler_careers['bowled_over_{}'.format(i)].fillna(0)
+                bowler_careers['overs_bowled_after_{}'.format(i)] = bowler_careers[
+                    'overs_bowled_after_{}'.format(i)].fillna(0)
+            else:
+                previous_bowler = outcome
+                if previous_bowler in bowler_careers.index:
+                    # want to temporarily drop bowler who bowled the last over,
+                    # and perma-drop anyone who has bowled 4 overs.
+                    bowler_prob = model.predict(bowler_careers.drop(previous_bowler)[regressor_names].fillna(0))
+                else:
+                    bowler_prob = model.predict(bowler_careers[regressor_names].fillna(0))
+                bowler_prob = bowler_prob / sum(bowler_prob)
+                outcome = np.random.choice(a=bowler_prob.index, size=1, p=bowler_prob.values)[0]
+                bowler_careers.loc[outcome, 'bowled_over_{}'.format(i)] = 1
+                bowler_careers['bowled_over_{}'.format(i)] = bowler_careers['bowled_over_{}'.format(i)].fillna(0)
+                bowler_careers['overs_bowled_after_{}'.format(i)] = bowler_careers[
+                    'overs_bowled_after_{}'.format(i - 1)]
+                bowler_careers.loc[outcome, 'overs_bowled_after_{}'.format(i)] = \
+                    bowler_careers.loc[outcome, 'overs_bowled_after_{}'.format(i - 1)] + 1
+                if bowler_careers.loc[outcome, 'overs_bowled_after_{}'.format(i)] == max_possible_overs:
+                    bowler_careers = bowler_careers.drop(outcome)
+            remaining_bowlers.append(outcome)
+
+        return remaining_bowlers
 
     # for an historic match, during the second innings, what is p(win|state of the game) for each ball in the innings?
     # note we cannot SavGol smooth these probabilities since this would use future information.
@@ -270,8 +349,8 @@ class HistoricMatchSimulator:
                 winner.append(x[0])
             c = Counter(winner)
             if verbose:
-                print('Chasing win % from ball {} is {}'.format(i, c[ball['batting_team']] / (
-                            c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])))
+                print('Chasing win % from ball {} is {}'.format(j, c[ball['batting_team']] / (
+                        c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])))
             #             second_innings_win_pct[ball['ball']] = c[ball['batting_team']]/(c[ball['bowling_team']]+c[ball['batting_team']]+c['Tie'])
             sample_proportion = c[ball['batting_team']] / (c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])
             sample_std_dev = np.sqrt(sample_proportion * (1 - sample_proportion) / n)
@@ -280,7 +359,7 @@ class HistoricMatchSimulator:
             winner = []
         return second_innings_win_pct
 
-    # for a harcoded array of first innings scores, what's the simulated probability the chasing team will chase them?
+    # for a hardcoded array of first innings scores, what's the simulated probability the chasing team will chase them?
 
     def precalc_win_probs_for_score_array(self, n, smooth=True, verbose=False):
         self.innings = 2
@@ -296,8 +375,8 @@ class HistoricMatchSimulator:
                 j += 1
             c = Counter(winner)
             if verbose:
-                print('Chasing win % from ball {} is {}'.format(i, c[ball['batting_team']] / (
-                            c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])))
+                print('Chasing win % from ball {} is {}'.format(j, c[ball['batting_team']] / (
+                        c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])))
             j = 0
             winner = []
             sample_proportion = c[ball['batting_team']] / (c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])
