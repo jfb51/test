@@ -1,10 +1,9 @@
 class Bowler:
-    def __init__(self, name, historic_career_stats, current_match_stats=None):
-        bowler_in_game_attributes = ['bowler_extras', 'bowler_runs_b4b', 'bowler_runs',
-                                     'bowler_wickets', 'bowler_wickets_b4b', 'bowler_balls_bowled_b4b',
-                                     'bowler_balls_bowled', 'bowler_dots', 'bowler_dots_b4b', 'bowler_er',
-                                     'bowler_er_b4b']
-        self.name = name
+    def __init__(self, pp, historic_career_stats, current_match_stats=None):
+        bowler_in_game_attributes = ['bowler_extras', 'bowler_runs_b4b', 'bowler_wickets_b4b',
+                                     'bowler_balls_bowled_b4b', 'bowler_dots_b4b', 'bowler_er_b4b']
+        self.name = pp['name']
+        self.bowling_style = pp['bowling_style']
         self.historic_career_stats = historic_career_stats.loc[self.name]
         if current_match_stats:
             self.current_match_stats = current_match_stats[bowler_in_game_attributes].to_dict()
@@ -13,10 +12,11 @@ class Bowler:
 
 
 class Batter:
-    def __init__(self, name, historic_career_stats, current_match_stats=None):
-        batter_in_game_attributes = ['batting_position', 'striker_runs', 'striker_runs_b4b', 'striker_balls_faced_b4b',
-                                     'striker_balls_faced', 'strike_rate', 'strike_rate_b4b']
-        self.name = name
+    def __init__(self, pp, historic_career_stats, current_match_stats=None):
+        batter_in_game_attributes = ['batting_position', 'striker_runs_b4b', 'striker_balls_faced_b4b',
+                                     'strike_rate_b4b']
+        self.name = pp['name']
+        self.batting_style = pp['batting_style']
         self.historic_career_stats = historic_career_stats.loc[self.name]
         if current_match_stats:
             self.current_match_stats = current_match_stats[batter_in_game_attributes].to_dict()
