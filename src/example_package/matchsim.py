@@ -1,5 +1,4 @@
 from example_package.team import SimpleHistoricTeam
-from player import Batter, Bowler #todo, fix import
 import copy
 from scipy.signal import savgol_filter
 from collections import OrderedDict
@@ -102,14 +101,27 @@ class HistoricMatchSimulator:
     def sim_ball(self):
         # module to simulate a ball
         # get model inputs from match state
-        # bwl_stats = self.bowling_team.get_probs(bowler, 'bwl')
-        # bat_stats = self.batting_team.get_probs(batter, 'bat')
-        # self.wickets_in_innings_b4b = int(self.batting_team.bat_wkts)
-        # self.legal_balls_in_innings_b4b = (self.over - 1) * 6 + self.ball
-        # self.legal_balls_remaining_in_innings = 120 - self.legal_balls_in_innings_b4b
-        # self.is_first_ball = int(self.ball == 0)
-        # self.is_powerplay = int(self.over <= 6)
-        # self.ball_regressor = self.tan_dict[self.legal_balls_in_innings_b4b]
+        # anything above the "outcomes" has to be state as of before the ball is bowled.
+        # anything below the "outcomes" is updating state for the next ball, given we now know outcome of this ball.
+
+        self.wickets_in_innings_b4b = int(self.batting_team.bat_wkts)
+        self.legal_balls_in_innings_b4b = (self.over - 1) * 6 + self.ball
+        self.legal_balls_remaining_in_innings = 120 - self.legal_balls_in_innings_b4b
+        self.is_first_ball = int(self.ball == 0)
+        self.is_last_ball = int(self.ball == 5)
+        self.bowler_er_b4b = self.bowling_team.bowler.current_match_stats['bowler_runs_b4b']/\
+                             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
+        self.run_rate_b4b = 6 * (self.innings_runs_b4b/self.legal_balls_in_innings_b4b)
+        self.bowler_dots_b4b = self.bowling_team.bowler.current_match_stats['bowler_dots_b4b']
+        self.bowler_balls_bowled_b4b = self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
+        self.bowler_runs_b4b = self.bowling_team.bowler.current_match_stats['bowler_runs_b4b']
+        self.partnership_runs_b4b = self.batting_team.partnership_runs
+        self.striker_balls_faced_b4b = self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
+        self.striker_runs_b4b = self.batting_team.onstrike.current_match_stats['striker_runs_b4b']
+        self.strike_rate_b4b = self.batting_team.onstrike.current_match_stats['strike_rate_b4b']
+
+        if self.innings == 2:
+            self.required_run_rate_b4b = 6 * (self.runs_required/self.legal_balls_remaining_in_innings)
 
         outcomes = ['0', '1', '2', '3', '4', '6', 'w', 'nb', 'W']
 
@@ -153,70 +165,138 @@ class HistoricMatchSimulator:
         outcome = np.random.choice(a=outcomes, size=1, p=probabilities)  # 38%
 
         #todo, our historic definition of balls faced is slightly wrong (wides are not a ball faced, no balls are)
+
+         # weird that I'm not including breakdown of bowling/batting stats for the game here - should be included.
+         # In other words, means can't use #sixes gone for in this match to predict things... This is because the 'career'
+         # figures include the entire match. Need to handle this more intelligently, like the bowling sim.
         self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b'] += 1
 
         if outcome == '0':
             self.ball += 1
             self.bowling_team.bowler.current_match_stats['bowler_dots_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
 
         elif outcome == '1':
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.over_runs_b4b += 1
+            self.innings_runs_b4b += 1
             self.batting_team.bat_total += 1
             self.bowling_team.bwl_total += 1
+            self.batting_team.partnership_runs += 1
             self.batting_team.change_ends()
+            if self.innings == 2:
+                self.runs_required -= 1
 
         elif outcome == '2':
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 2
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 2
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.over_runs_b4b += 2
+            self.innings_runs_b4b += 2
             self.batting_team.bat_total += 2
             self.bowling_team.bwl_total += 2
+            self.batting_team.partnership_runs += 2
+            if self.innings == 2:
+                self.runs_required -= 2
 
         elif outcome == '3':
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 3
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 3
-            self.batting_team.bat_total += 2
-            self.bowling_team.bwl_total += 2
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.over_runs_b4b += 3
+            self.innings_runs_b4b += 3
+            self.batting_team.bat_total += 3
+            self.bowling_team.bwl_total += 3
+            self.batting_team.partnership_runs += 3
+            if self.innings == 2:
+                self.runs_required -= 3
             self.batting_team.change_ends()
 
         elif outcome == '4':
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 4
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 4
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.over_runs_b4b += 4
+            self.innings_runs_b4b += 4
             self.batting_team.bat_total += 4
             self.bowling_team.bwl_total += 4
+            self.batting_team.partnership_runs += 4
+            if self.innings == 2:
+                self.runs_required -= 4
 
         elif outcome == '6':
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 6
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 6
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.over_runs_b4b += 6
+            self.innings_runs_b4b += 6
             self.batting_team.bat_total += 6
             self.bowling_team.bwl_total += 6
+            self.batting_team.partnership_runs += 6
+            if self.innings == 2:
+                self.runs_required -= 6
 
         elif outcome == 'W':
             self.ball += 1
             self.bowling_team.bwl_wkts += 1
-            self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 1
-            self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_wickets_b4b'] += 1
+            self.bowler_wickets_b4b = self.bowling_team.bowler.current_match_stats['bowler_wickets_b4b']
             self.batting_team.wicket()
 
         elif outcome in ['w', 'nb']:
             self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b'] -= 1
+            self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
+                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_extras'] += 1
+            self.bowler_extras = self.bowling_team.bowler.current_match_stats['bowler_extras']
+            self.over_runs_b4b += 1
+            self.innings_runs_b4b += 1
             self.batting_team.bat_total += 1
             self.bowling_team.bwl_total += 1
+            self.batting_team.partnership_runs += 1
+            if self.innings == 2:
+                self.runs_required -= 1
 
         return outcome
 
     def sim_over(self):
         # module to simulate an over
+        self.is_middle_overs = (self.over > 6) & (self.over < 17)
+        self.is_death_overs = self.over > 16
+        self.is_powerplay = self.over < 6
+        # need to tweak for BBL in 2020, 21 (19?)
+
         while (self.ball < 6) and (self.batting_team.bat_wkts < 10) and \
                 ((self.innings == 1) or (self.batting_team.bat_total <= self.bowling_team.bat_total)):
-            self.bowling_team.bowler = self.bowling_plan[self.over - 1] #returns Bowler instance
+            self.bowling_team.bowler = self.bowling_plan[self.over - 1] # returns Bowler instance
             self.sim_ball()
 
         self.ball = 0
