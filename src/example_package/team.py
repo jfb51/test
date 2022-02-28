@@ -25,6 +25,7 @@ class SimpleHistoricTeam:
             # batting innings state
             self.bat_total = 0
             self.bat_wkts = 0
+            self.partnership_runs = 0
 
             # bowling innings state
             self.bwl_total = 0
@@ -43,6 +44,7 @@ class SimpleHistoricTeam:
                     self.bat_wkts = self.initial_match_state['wickets_in_innings_b4b']
                     self.onstrike = self.batters[self.initial_match_state['striker']]
                     self.offstrike = self.batters[self.initial_match_state['non_striker']]
+                    self.partnership_runs = self.initial_match_state['partnership_runs_b4b']
                     self.bat_bwl = 'bat'
                     self.bwl_total = 0
                     self.bwl_wkts = 0
@@ -52,6 +54,7 @@ class SimpleHistoricTeam:
                     self.bat_wkts = self.initial_match_state['wickets_in_innings_b4b']
                     self.onstrike = self.batters[self.initial_match_state['striker']]
                     self.offstrike = self.batters[self.initial_match_state['non_striker']]
+                    self.partnership_runs = self.initial_match_state['partnership_runs_b4b']
                     if self.simulated_target is not None:
                         self.bwl_total = self.simulated_target
                     else:
@@ -87,6 +90,7 @@ class SimpleHistoricTeam:
     def wicket(self):
         # module for updating the team after a wicket
         self.bat_wkts += 1
+        self.partnership_runs = 0
         if self.bat_wkts < 10:
             self.onstrike = self.batting_order[self.bat_wkts + 2]
 
