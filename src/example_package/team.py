@@ -9,42 +9,55 @@ class SimpleHistoricTeam:
         self.name = name  # team name
         self.career_bowling_data = career_bowling_data
         self.career_batting_data = career_batting_data
-
-        if self.name == self.match_row['setting_teams']:
-            self.batters = {pp['name']: Batter(pp, career_batting_data) for pp in self.match_row['setting_players']}
-            self.bowlers = {pp['name']: Bowler(pp, career_bowling_data) for pp in self.match_row['setting_bowlers']}
-        else:
-            self.batters = {pp['name']: Batter(pp, career_batting_data) for pp in self.match_row['chasing_players']}
-            self.bowlers = {pp['name']: Bowler(pp, career_bowling_data) for pp in self.match_row['chasing_bowlers']}
-
-        self.batting_order = {i + 1: x for i, x in enumerate(self.batters.values())}  # batting order
         self.initial_match_state = initial_match_state
         self.simulated_target = simulated_target
 
-        if self.initial_match_state is None:
-            # batting innings state
-            self.bat_total = 0
-            self.bat_wkts = 0
-            self.partnership_runs = 0
-
-            # bowling innings state
-            self.bwl_total = 0
-            self.bwl_wkts = 0
-
-            self.onstrike = self.batting_order[1]
-            self.offstrike = self.batting_order[2]
-            self.bat_bwl = ''
-
+        if self.name == self.match_row['setting_teams']:
+            self.batters = [Batter(name, pp, career_batting_data) for name, pp in self.match_row['setting_players'].items()]
+            self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['setting_bowlers'].items()]
         else:
+            self.batters = [Batter(name, pp, career_batting_data) for name, pp in self.match_row['chasing_players'].items()]
+            self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['chasing_bowlers'].items()]
+
+        self.batting_order = {i + 1: x for i, x in enumerate(self.batters)}  # batting order
+
+            # batting innings state
+        self.bat_total = 0
+        self.bat_wkts = 0
+        self.partnership_runs = 0
+
+        # bowling innings state
+        self.bwl_total = 0
+        self.bwl_wkts = 0
+
+        self.onstrike = self.batting_order[1]
+        self.offstrike = self.batting_order[2]
+        self.bat_bwl = ''
+
+        if self.initial_match_state is not None:
+            latest_ball = self.initial_match_state[-1]
             # if I'm the batting team
-            if self.name == self.initial_match_state['batting_team']:
+            if self.name == latest_ball['batting_team']:
+                off_strike_stats = \
+                    [b for b in self.initial_match_state if b['striker'] == latest_ball['non_striker']]
+                if len(off_strike_stats) > 0:
+                    off_strike_stats = off_strike_stats[-1]
+                else:
+                    off_strike_stats = None
+                if self.name == self.match_row['setting_teams']:
+                    players = self.match_row['setting_players']
+                else:
+                    players = self.match_row['chasing_players']
+                    # todo: fix up the match row df to accommodate this format
+                    self.onstrike = Batter(latest_ball['striker'], players[latest_ball['striker']],
+                                           career_batting_data, latest_ball)
+                    self.offstrike = Batter(latest_ball['non_striker'], players[latest_ball['non_striker']],
+                                            career_batting_data, off_strike_stats)
                 # and it's the first innings, then I haven't bowled
-                if self.initial_match_state['innings'] == 1:
-                    self.bat_total = self.initial_match_state['innings_runs_b4b']
-                    self.bat_wkts = self.initial_match_state['wickets_in_innings_b4b']
-                    self.onstrike = self.batters[self.initial_match_state['striker']]
-                    self.offstrike = self.batters[self.initial_match_state['non_striker']]
-                    self.partnership_runs = self.initial_match_state['partnership_runs_b4b']
+                if latest_ball['innings'] == 1:
+                    self.bat_total = latest_ball['innings_runs_b4b']
+                    self.bat_wkts = latest_ball['wickets_in_innings_b4b']
+                    self.partnership_runs = latest_ball['partnership_runs_b4b']
                     self.bat_bwl = 'bat'
                     self.bwl_total = 0
                     self.bwl_wkts = 0
@@ -52,8 +65,6 @@ class SimpleHistoricTeam:
                 else:
                     self.bat_total = self.initial_match_state['innings_runs_b4b']
                     self.bat_wkts = self.initial_match_state['wickets_in_innings_b4b']
-                    self.onstrike = self.batters[self.initial_match_state['striker']]
-                    self.offstrike = self.batters[self.initial_match_state['non_striker']]
                     self.partnership_runs = self.initial_match_state['partnership_runs_b4b']
                     if self.simulated_target is not None:
                         self.bwl_total = self.simulated_target
@@ -63,6 +74,13 @@ class SimpleHistoricTeam:
                     self.bat_bwl = 'bat'
             # if I'm the bowling team
             else:
+                # names
+                for bowler in self.bowlers:
+                    #last ball the bowler has bowled
+                    other_bowler_stats = [b for b in self.initial_match_state if b['bowler'] == bowler.name][-1]
+                    if len(other_bowler_stats) > 0:
+                        # instantiate a new bowler class with the current stats
+                        bowler.current_match_stats = other_bowler_stats
                 # and it's the first innings, then I'm bowling
                 if self.initial_match_state['innings'] == 1:
                     self.bat_total = 0
@@ -70,7 +88,7 @@ class SimpleHistoricTeam:
                     self.bat_bwl = 'bowl'
                     self.bwl_total = self.initial_match_state['innings_runs_b4b']
                     self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
-                    self.bowler = self.bowlers[self.initial_match_state['bowler']]
+                    self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
                     self.onstrike = self.batting_order[1]
                     self.offstrike = self.batting_order[2]
                 # and it's the second innings, then I've batted already
@@ -83,7 +101,7 @@ class SimpleHistoricTeam:
                     self.bat_bwl = 'bowl'
                     self.bwl_total = self.initial_match_state['innings_runs_b4b']
                     self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
-                    self.bowler = self.bowlers[self.initial_match_state['bowler']]
+                    self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
                     self.onstrike = self.batting_order[1]
                     self.offstrike = self.batting_order[2]
 
