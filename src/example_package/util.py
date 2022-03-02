@@ -1,5 +1,6 @@
 import numpy as np
 from collections import namedtuple
+from math import erf
 
 
 def kelly_bet(row, comission=0.05, bankroll=1000):
@@ -36,3 +37,7 @@ def match_data(match_id, bbb_df):
 
 def careers(match_id, career_df):
     return career_df.xs(match_id, level=1)
+
+
+def phi(z):
+    return 1.0 + erf(z/1.41421356237) / 2.0
