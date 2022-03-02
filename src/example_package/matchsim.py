@@ -4,26 +4,32 @@ from scipy.signal import savgol_filter
 from collections import OrderedDict
 import numpy as np
 from collections import Counter
-from operator import attrgetter
-from scipy.stats import norm
+from operator import itemgetter
+from example_package.util import phi, categorify_dict, remove_useless_regression_model_params
 
 
 class HistoricMatchSimulator:
     def __init__(self, match_id, match_row, historic_match_data, career_bowling_data,
-                 career_batting_data, wicket_models, run_models, wide_models, nb_models, bowling_models):
+                 career_batting_data, wicket_models, dot_models, one_models, two_models, three_models, four_models,
+                 six_models, wide_models, nb_models, bowling_models):
         self.match_id = str(match_id)
         self.wicket_models = wicket_models
-        self.run_models = run_models
+        self.dot_models = dot_models
+        self.one_models = one_models
+        self.two_models = two_models
+        self.three_models = three_models
+        self.four_models = four_models
+        self.six_models = six_models
         self.bowling_models = bowling_models
-        self.wide_model = wide_models
+        self.wide_models = wide_models
         self.nb_models = nb_models
         self.match_row = match_row
         self.historic_match_data = historic_match_data
         self.career_bowling_data = career_bowling_data
         self.career_batting_data = career_batting_data
         self.bowling_plan = []
-        self.live_match_state = {}
-        self.event_name = self.match_row['event']
+        self.live_match_state = dict()
+        self.live_match_state['event'] = self.match_row['event']
         # initialise match state
         self.innings = 1
         self.over = 1
@@ -104,6 +110,28 @@ class HistoricMatchSimulator:
 
     def sim_over(self):
         # module to simulate an over
+        for model in self.wide_models:
+            if model.condition(self):
+                self.wide_model = model
+
+        for model in self.nb_models:
+            if model.condition(self):
+                self.nb_model = model
+
+        for model in self.wicket_models:
+            if model.condition(self):
+                self.wicket_model = model
+
+        # be careful as threes only have one model
+        for i, model in enumerate(self.dot_models):
+            if model.condition(self):
+                self.dot_model = model
+                self.one_model = self.one_models[i]
+                self.two_model = self.two_models[i]
+                self.three_model = self.three_models[i]
+                self.four_model = self.four_models[i]
+                self.six_model = self.six_models[i]
+
         self.live_match_state['is_middle_overs'] = (self.over > 6) & (self.over < 17)
         self.live_match_state['is_death_overs'] = self.over > 16
         self.live_match_state['is_powerplay'] = self.over < 6
@@ -141,6 +169,12 @@ class HistoricMatchSimulator:
             self.live_match_state['required_run_rate_b4b'] = 6 * (self.live_match_state['runs_required_b4b'] /
                                                                   self.live_match_state['legal_balls_in_innings_b4b'])
 
+        self.regressors = self.live_match_state.copy()
+        self.regressors.update(self.bowling_team.bowler.current_match_stats)
+        self.regressors.update(self.bowling_team.bowler.historic_career_stats)
+        self.regressors.update(self.batting_team.onstrike.current_match_stats)
+        self.regressors.update(self.batting_team.onstrike.historic_career_stats)
+
         outcomes = ['0', '1', '2', '3', '4', '6', 'w', 'nb', 'W']
 
         # inn = [self.innings == 2]
@@ -148,37 +182,27 @@ class HistoricMatchSimulator:
         #     inn1_score = 0
         # else:
         #     inn1_score = self.bowling_team.bat_total
-
         # select relevant models - at this point I need to have gathered all the state.
+        # the model that we pick is unlikely to change by ball, so can move out of critical loop.
 
-        for model in self.wide_models:
-            if model.condition(self):
-                break
-        p_wide = model.lookup_dict[attrgetter(*model.model_variables)(self)]
-
+        # wide
+        p_wide = self.calculate_model_probability(self.wide_model)
         # nb
-        for model in self.nb_models:
-            if model.condition(self):
-                break
-        p_no_ball = model.lookup_dict[attrgetter(*model.model_variables)(self)]
-
+        p_nb = self.calculate_model_probability(self.nb_model)
         # wickets
-        for model in self.wicket_models:
-            if model.condition(self):
-                break
-        p_wicket = model.lookup_dict[attrgetter(*model.model_variables)(self)]
-
-        # runs
-        for model in self.run_models:
-            if model.condition(self):
-                break
-        p_runs = model.lookup_dict[attrgetter(*model.model_variables)(self)]
+        p_wicket = self.calculate_model_probability(self.wicket_model)
+        # runs - runs model is now 5 probit models - key is condition, then value is a list of models
+        p_runs = []
+        for m in [self.dot_model, self.one_model, self.two_model, self.three_model, self.four_model, self.six_model]:
+            p_runs.append(self.calculate_model_probability(m))
+        # sum of runs should be close to 1 but may not be.
+        p_runs = p_runs/sum(p_runs)
 
         # now normalise runs
-        p_runs = p_runs * (1 - (p_no_ball + p_wide + p_wicket))
+        p_runs = p_runs * (1 - (p_nb + p_wide + p_wicket))
 
         # note that p_runs + p_wicket + p_wide + p_nb = 1, and the runs model must be adjusted for this!
-        probabilities = np.append(p_runs, [p_wide, p_no_ball, p_wicket])  # 10%
+        probabilities = np.append(p_runs, [p_wide, p_nb, p_wicket])  # 10%
         # sample from predicted distribution
         outcome = np.random.choice(a=outcomes, size=1, p=probabilities)  # 38%
 
@@ -471,3 +495,12 @@ class HistoricMatchSimulator:
             j = 0
             scores = []
         return simulated_first_innings_scores
+
+    def calculate_model_probability(self, model):
+        items = itemgetter(*model.model_variables)(self.regressors)
+        dz = dict(zip(model.model_variables, items))
+        dz['Intercept'] = 1
+        state = categorify_dict(dz)
+        relevant_params = remove_useless_regression_model_params(model.model_params)
+        z = sum(state[key] * relevant_params[key] for key in state)
+        return phi(z)
