@@ -1,5 +1,5 @@
 import numpy as np
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from math import erf
 
 
@@ -41,3 +41,21 @@ def careers(match_id, career_df):
 
 def phi(z):
     return 1.0 + erf(z/1.41421356237) / 2.0
+
+
+def categorify_dict(state):
+    dy = state.copy()
+    for k, v in state.items():
+        if type(v) == str:
+            new_k = k + '[T.' + v + ']'
+            dy[new_k] = 1
+            del dy[k]
+    return OrderedDict(sorted(dy.items()))
+
+
+def remove_useless_regression_model_params(state, params):
+    smol = params.copy()
+    for param in params.keys():
+        if param not in state.keys():
+            del smol[param]
+    return OrderedDict(sorted(smol.items()))
