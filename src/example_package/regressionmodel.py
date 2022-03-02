@@ -5,15 +5,16 @@ from collections import defaultdict
 
 
 class RegressionBasedModel:
-    def __init__(self, condition, model):
+    def __init__(self, condition, model, prefill=False):
         self.condition = condition
         self.model = model
         self.model_data = self.model.model.data.orig_exog
-        if 'Intercept' in self.model_data.columns:
-            self.model_variables = self.model_data.columns.drop('Intercept')
+        self.model_variables = [s.strip() for s in self.model.model.data.formula.split('~')[1].split('+')]
+        self.model_params = self.model.params.to_dict()
+        if prefill:
+            self.lookup_dict = self.prefill_predictions_from_formula()
         else:
-            self.model_variables = self.model_data.columns
-        self.lookup_dict = self.prefill_predictions_from_formula()
+            self.lookup_dict = {}
 
     def prefill_predictions_from_formula(self):
         # model space = lambda function to filter the model
