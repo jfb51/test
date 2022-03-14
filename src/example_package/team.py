@@ -48,7 +48,6 @@ class SimpleHistoricTeam:
                     players = self.match_row['setting_players']
                 else:
                     players = self.match_row['chasing_players']
-                    # todo: fix up the match row df to accommodate this format
                     self.onstrike = Batter(latest_ball['striker'], players[latest_ball['striker']],
                                            career_batting_data, latest_ball)
                     self.offstrike = Batter(latest_ball['non_striker'], players[latest_ball['non_striker']],

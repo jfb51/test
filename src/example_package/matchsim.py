@@ -186,15 +186,15 @@ class HistoricMatchSimulator:
         # the model that we pick is unlikely to change by ball, so can move out of critical loop.
 
         # wide
-        p_wide = self.calculate_model_probability(self.wide_model)
+        p_wide = self.calculate_probit_model_probability(self.wide_model)
         # nb
-        p_nb = self.calculate_model_probability(self.nb_model)
+        p_nb = self.calculate_probit_model_probability(self.nb_model)
         # wickets
-        p_wicket = self.calculate_model_probability(self.wicket_model)
+        p_wicket = self.calculate_probit_model_probability(self.wicket_model)
         # runs - runs model is now 5 probit models - key is condition, then value is a list of models
         p_runs = []
         for m in [self.dot_model, self.one_model, self.two_model, self.three_model, self.four_model, self.six_model]:
-            p_runs.append(self.calculate_model_probability(m))
+            p_runs.append(self.calculate_probit_model_probability(m))
         # sum of runs should be close to 1 but may not be.
         p_runs = p_runs/sum(p_runs)
 
@@ -496,7 +496,7 @@ class HistoricMatchSimulator:
             scores = []
         return simulated_first_innings_scores
 
-    def calculate_model_probability(self, model):
+    def calculate_probit_model_probability(self, model):
         items = itemgetter(*model.model_variables)(self.regressors)
         dz = dict(zip(model.model_variables, items))
         dz['Intercept'] = 1
