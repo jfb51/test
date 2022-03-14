@@ -5,7 +5,7 @@ class Bowler:
         self.name = name
         self.pp = pp
         self.historic_career_stats = historic_career_stats.loc[self.name].to_dict()
-        self.historic_career_stats['bowling_style'] = self.pp['bowling_style']
+        self.historic_career_stats['bowling_style'] = self.pp['simple_bowling']
         if current_match_stats:
             self.current_match_stats = current_match_stats[bowler_in_game_attributes]
         else:
@@ -19,7 +19,7 @@ class Batter:
         self.name = name
         self.pp = pp
         self.historic_career_stats = historic_career_stats.loc[self.name].to_dict()
-        self.historic_career_stats['batting_style'] = self.pp['batting_style']
+        self.historic_career_stats['batting_style'] = self.pp['Batting Style']
         if current_match_stats:
             self.current_match_stats = current_match_stats[batter_in_game_attributes]
         else:
