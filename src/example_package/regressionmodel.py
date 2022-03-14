@@ -11,6 +11,8 @@ class RegressionBasedModel:
         self.model_data = self.model.model.data.orig_exog
         self.model_variables = [s.strip() for s in self.model.model.data.formula.split('~')[1].split('+')]
         self.model_params = self.model.params.to_dict()
+        if 'formula' in self.model.model.__dir__():
+            self.model.model.data.frame = model.model.data.frame[:10]
         if prefill:
             self.lookup_dict = self.prefill_predictions_from_formula()
         else:
@@ -19,7 +21,7 @@ class RegressionBasedModel:
     def prefill_predictions_from_formula(self):
         # model space = lambda function to filter the model
         # model hyperparams = for a model, which variables do I split by
-        # sane values dict = harcoded ranges of the values e.g. overs have to be 1-20 inclusive
+        # sane values dict = hardcoded ranges of the values e.g. overs have to be 1-20 inclusive
         df = self.model_data
         if 'Intercept' in df.columns:
             df = df.drop(['Intercept'], axis=1)
