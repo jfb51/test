@@ -357,7 +357,7 @@ class HistoricMatchSimulator:
         irl_ob_columns = ['overs_bowled_after_{}_irl'.format(i) for i in range(1, 21)]
 
         potential_bowlers = [n.name for n in self.bowling_team.bowlers]
-        bowler_careers = self.career_bowling_data[lambda x: x.index.isin(potential_bowlers)] #this seems awkward
+        bowler_careers = self.career_bowling_data.loc[potential_bowlers]
 
         for column in bowled_over_cols:
             bowler_careers = bowler_careers.rename(columns={column: '{}_irl'.format(column)})
