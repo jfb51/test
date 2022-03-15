@@ -374,7 +374,7 @@ class HistoricMatchSimulator:
 
         # drop any bowlers who have bowled out
         bowler_careers = bowler_careers.drop(
-            bowler_careers[bowler_careers['overs_bowled_after_{}'.format(self.over)] == max_possible_overs].index)
+            bowler_careers[bowler_careers['overs_bowled_after_{}_irl'.format(self.over)] == max_possible_overs].index)
 
         remaining_bowlers = []
 
