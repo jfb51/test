@@ -511,6 +511,6 @@ class HistoricMatchSimulator:
         dz = dict(zip(model.model_variables, items))
         dz['Intercept'] = 1
         state = categorify_dict(dz)
-        relevant_params = remove_useless_regression_model_params(model.model_params)
+        relevant_params = remove_useless_regression_model_params(state, model.model_params)
         z = sum(state[key] * relevant_params[key] for key in state)
         return phi(z)
