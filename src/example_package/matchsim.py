@@ -29,7 +29,7 @@ class HistoricMatchSimulator:
         self.career_batting_data = career_batting_data
         self.bowling_plan = []
         self.live_match_state = dict()
-        self.live_match_state['event'] = self.match_row['event']
+        self.live_match_state['event_name'] = self.match_row['event_name']
         # initialise match state
         self.innings = 1
         self.over = 1
