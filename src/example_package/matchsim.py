@@ -357,8 +357,8 @@ class HistoricMatchSimulator:
         # NB this simple at the moment, we don't change in response to the progression of the innings yet, we just
         # assume the captain decides on all bowlers at start of innings and sticks with this plan.
         max_possible_overs = 4
-        bowled_over_cols = ['bowled_over_{}'.format(i) for i in range(1, 21)]
-        overs_bowled_cols = ['overs_bowled_after_{}'.format(i) for i in range(1, 21)]
+        bowled_over_cols = ['bowled_over_{}_bowl'.format(i) for i in range(1, 21)]
+        overs_bowled_cols = ['overs_bowled_after_{}_bowl'.format(i) for i in range(1, 21)]
         irl_columns = ['bowled_over_{}_irl'.format(i) for i in range(1, 21)]
         irl_ob_columns = ['overs_bowled_after_{}_irl'.format(i) for i in range(1, 21)]
 
@@ -375,7 +375,7 @@ class HistoricMatchSimulator:
         else:
             bowler_careers[bowled_over_cols[:self.over]] = bowler_careers[irl_columns[:self.over]]
             bowler_careers[overs_bowled_cols[:self.over]] = bowler_careers[irl_ob_columns[:self.over]]
-            outcome = bowler_careers[lambda x: x['bowled_over_{}'.format(self.over)]['name']]
+            outcome = bowler_careers[lambda x: x['bowled_over_{}_bowl'.format(self.over)]['name']]
             counter = self.over
 
         # drop any bowlers who have bowled out
@@ -391,11 +391,11 @@ class HistoricMatchSimulator:
                 bowler_prob = model.predict(bowler_careers[regressor_names].fillna(0))
                 bowler_prob = bowler_prob / sum(bowler_prob)
                 outcome = np.random.choice(a=bowler_prob.index, size=1, p=bowler_prob.values)[0]
-                bowler_careers.loc[outcome, 'bowled_over_{}'.format(i)] = 1
-                bowler_careers.loc[outcome, 'overs_bowled_after_{}'.format(i)] = 1
-                bowler_careers['bowled_over_{}'.format(i)] = bowler_careers['bowled_over_{}'.format(i)].fillna(0)
-                bowler_careers['overs_bowled_after_{}'.format(i)] = bowler_careers[
-                    'overs_bowled_after_{}'.format(i)].fillna(0)
+                bowler_careers.loc[outcome, 'bowled_over_{}_bowl'.format(i)] = 1
+                bowler_careers.loc[outcome, 'overs_bowled_after_{}_bowl'.format(i)] = 1
+                bowler_careers['bowled_over_{}_bowl'.format(i)] = bowler_careers['bowled_over_{}_bowl'.format(i)].fillna(0)
+                bowler_careers['overs_bowled_after_{}_bowl'.format(i)] = bowler_careers[
+                    'overs_bowled_after_{}_bowl'.format(i)].fillna(0)
             else:
                 previous_bowler = outcome
                 if previous_bowler in bowler_careers.index:
@@ -406,18 +406,18 @@ class HistoricMatchSimulator:
                     bowler_prob = model.predict(bowler_careers[regressor_names].fillna(0))
                 bowler_prob = bowler_prob / sum(bowler_prob)
                 outcome = np.random.choice(a=bowler_prob.index, size=1, p=bowler_prob.values)[0]
-                bowler_careers.loc[outcome, 'bowled_over_{}'.format(i)] = 1
-                bowler_careers['overs_bowled_after_{}'.format(i)] = bowler_careers[
-                                                                        'overs_bowled_after_{}'.format(i - 1)] + \
+                bowler_careers.loc[outcome, 'bowled_over_{}_bowl'.format(i)] = 1
+                bowler_careers['overs_bowled_after_{}_bowl'.format(i)] = bowler_careers[
+                                                                        'overs_bowled_after_{}_bowl'.format(i - 1)] + \
                                                                     bowler_careers[
-                                                                        'bowled_over_{}'.format(i)]
-                if bowler_careers.loc[outcome, 'overs_bowled_after_{}'.format(i)] == max_possible_overs:
+                                                                        'bowled_over_{}_bowl'.format(i)]
+                if bowler_careers.loc[outcome, 'overs_bowled_after_{}_bowl'.format(i)] == max_possible_overs:
                     bowler_careers = bowler_careers.drop(outcome)
 
-            for x in self.bowling_team.bowlers:
-                if x.name == outcome:
+            for b in self.bowling_team.bowlers:
+                if b.name == outcome:
                     break
-            remaining_bowlers.append(x)
+            remaining_bowlers.append(b)
 
         return remaining_bowlers
 
