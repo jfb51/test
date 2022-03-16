@@ -61,3 +61,10 @@ class CustomDefaultDict(defaultdict):
             raise KeyError((key,))
         self[key] = value = self.default_factory(key)
         return value
+
+
+class SlimRegModel:
+    def __init__(self, condition, model):
+        self.condition = condition
+        self.model_variables = [s.strip() for s in model.model.data.formula.split('~')[1].split('+')]
+        self.model_params = model.params.to_dict()

@@ -12,7 +12,7 @@ class SimpleHistoricTeam:
         self.initial_match_state = initial_match_state
         self.simulated_target = simulated_target
 
-        if self.name == self.match_row['setting_teams']:
+        if self.name == self.match_row['setting_team']:
             self.batters = [Batter(name, pp, career_batting_data) for name, pp in self.match_row['setting_players'].items()]
             self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['setting_bowlers'].items()]
         else:
@@ -44,7 +44,7 @@ class SimpleHistoricTeam:
                     off_strike_stats = off_strike_stats[-1]
                 else:
                     off_strike_stats = None
-                if self.name == self.match_row['setting_teams']:
+                if self.name == self.match_row['setting_team']:
                     players = self.match_row['setting_players']
                 else:
                     players = self.match_row['chasing_players']
