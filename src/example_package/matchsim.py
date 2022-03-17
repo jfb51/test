@@ -164,6 +164,17 @@ class HistoricMatchSimulator:
         self.live_match_state['legal_balls_remaining'] = 120 - self.live_match_state['legal_balls_in_innings_b4b']
         self.live_match_state['is_first_ball'] = int(self.ball == 0)
         self.live_match_state['is_last_ball'] = int(self.ball == 5)
+        self.live_match_state['dots_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_dots_bowl'] + \
+                                                self.batting_team.onstrike.historic_career_stats['prop_dots_bat']
+        self.live_match_state['ones_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_ones_bowl'] + \
+                                                self.batting_team.onstrike.historic_career_stats['prop_ones_bat']
+        self.live_match_state['twos_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_twos_bowl'] + \
+                                                self.batting_team.onstrike.historic_career_stats['prop_twos_bat']
+        self.live_match_state['fours_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_fours_bowl'] + \
+                                                self.batting_team.onstrike.historic_career_stats['prop_fours_bat']
+        self.live_match_state['sixes_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_sixes_bowl'] + \
+                                                self.batting_team.onstrike.historic_career_stats['prop_sixes_bat']
+
         if self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] > 0:
             self.bowling_team.bowler.current_match_stats['bowler_er_b4b'] = \
                 self.bowling_team.bowler.current_match_stats['bowler_runs_b4b']/\
