@@ -358,7 +358,7 @@ class HistoricMatchSimulator:
 
     def change_inns(self):
         # module to swap bowling and batting sides after 1st innings
-        self.live_match_state['runs_required_b4b'] = self.batting_team.bat_total + 1
+        self.live_match_state['runs_required'] = self.batting_team.bat_total + 1
         temp = self.batting_team
         self.batting_team = self.bowling_team
         self.bowling_team = temp
