@@ -219,7 +219,7 @@ class HistoricMatchSimulator:
         # runs - runs model is now 5 probit models - key is condition, then value is a list of models
         p_runs = []
         for m in [self.dot_model, self.one_model, self.two_model, self.three_model, self.four_model, self.six_model]:
-            p_runs.append(self.calculate_probit_model_probability(m))
+            p_runs = np.append(p_runs, self.calculate_probit_model_probability(m))
         # sum of runs should be close to 1 but may not be.
         p_runs = p_runs/sum(p_runs)
 
