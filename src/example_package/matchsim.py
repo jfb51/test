@@ -32,6 +32,7 @@ class HistoricMatchSimulator:
         self.live_match_state['event_name'] = self.match_row['event_name']
         self.live_match_state['avg_ground_rpo'] = self.match_row['avg_ground_rpo']
         self.live_match_state['runs_required'] = 0
+        self.live_match_state['innings_runs_b4b'] = 0
 
         # initialise match state
         self.innings = 1
@@ -65,6 +66,7 @@ class HistoricMatchSimulator:
             latest_ball = initial_match_state[-1]
             self.live_match_state['runs_required'] = latest_ball['runs_required']
             self.innings = latest_ball['innings']
+            self.live_match_state['innings_runs_b4b'] = latest_ball['innings_runs_b4b']
             self.over = latest_ball['over']
             self.ball = latest_ball['legal_balls_in_innings_b4b'] % 6
             self.batting_team = SimpleHistoricTeam(latest_ball['batting_team'],
