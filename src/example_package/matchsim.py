@@ -188,7 +188,7 @@ class HistoricMatchSimulator:
             self.live_match_state['run_rate_b4b'] = 0
 
         if self.innings == 2:
-            self.live_match_state['required_run_rate_b4b'] = 6 * (self.live_match_state['runs_required_b4b'] /
+            self.live_match_state['required_run_rate_b4b'] = 6 * (self.live_match_state['runs_required'] /
                                                                   self.live_match_state['legal_balls_remaining'])
 
         self.regressors = self.live_match_state.copy()
@@ -259,7 +259,7 @@ class HistoricMatchSimulator:
             self.batting_team.partnership_runs += 1
             self.batting_team.change_ends()
             if self.innings == 2:
-                self.live_match_state['runs_required_b4b'] -= 1
+                self.live_match_state['runs_required'] -= 1
 
         elif outcome == '2':
             self.ball += 1
@@ -276,7 +276,7 @@ class HistoricMatchSimulator:
             self.batting_team.partnership_runs += 2
             self.live_match_state['partnership_runs_b4b'] += 2
             if self.innings == 2:
-                self.live_match_state['runs_required_b4b'] -= 2
+                self.live_match_state['runs_required'] -= 2
 
         elif outcome == '3':
             self.ball += 1
@@ -293,7 +293,7 @@ class HistoricMatchSimulator:
             self.batting_team.partnership_runs += 3
             self.live_match_state['partnership_runs_b4b'] += 3
             if self.innings == 2:
-                self.live_match_state['runs_required_b4b'] -= 3
+                self.live_match_state['runs_required'] -= 3
             self.batting_team.change_ends()
 
         elif outcome == '4':
@@ -311,7 +311,7 @@ class HistoricMatchSimulator:
             self.batting_team.partnership_runs += 4
             self.live_match_state['partnership_runs_b4b'] += 4
             if self.innings == 2:
-                self.live_match_state['runs_required_b4b'] -= 4
+                self.live_match_state['runs_required'] -= 4
 
         elif outcome == '6':
             self.ball += 1
@@ -328,7 +328,7 @@ class HistoricMatchSimulator:
             self.batting_team.partnership_runs += 6
             self.live_match_state['partnership_runs_b4b'] += 6
             if self.innings == 2:
-                self.live_match_state['runs_required_b4b'] -= 6
+                self.live_match_state['runs_required'] -= 6
 
         elif outcome == 'W':
             self.ball += 1
@@ -352,7 +352,7 @@ class HistoricMatchSimulator:
             self.batting_team.partnership_runs += 1
             self.live_match_state['partnership_runs_b4b'] += 1
             if self.innings == 2:
-                self.live_match_state['runs_required_b4b'] -= 6
+                self.live_match_state['runs_required'] -= 1
 
         return outcome
 
