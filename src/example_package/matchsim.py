@@ -195,7 +195,7 @@ class HistoricMatchSimulator:
             self.live_match_state['run_rate_b4b'] = 0
 
         if self.innings == 2:
-            self.live_match_state['required_run_rate_b4b'] = 6 * (self.live_match_state['runs_required'] /
+            self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
                                                                   self.live_match_state['legal_balls_remaining'])
 
         self.regressors = self.live_match_state.copy()
