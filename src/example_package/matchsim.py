@@ -32,6 +32,7 @@ class HistoricMatchSimulator:
         self.live_match_state['event_name'] = self.match_row['event_name']
         self.live_match_state['avg_ground_rpo'] = self.match_row['avg_ground_rpo']
         self.live_match_state['runs_required'] = 0
+
         # initialise match state
         self.innings = 1
         self.over = 1
@@ -83,7 +84,7 @@ class HistoricMatchSimulator:
 
         self.bowling_plan = self.sim_bowlers_for_innings()
         # returns a list of Bowlers to bowl out the remainder of the innings
-
+        self.live_match_state['partnership_runs_b4b'] = self.batting_team.partnership_runs
         self.live_match_state['implied_batting_team_prob'] = \
             self.historic_match_data['implied_batting_team_prob'].iloc[0]
         while self.innings == 1:
