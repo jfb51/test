@@ -40,7 +40,7 @@ def careers(match_id, career_df):
 
 
 def phi(z):
-    return 1.0 + erf(z/1.41421356237) / 2.0
+    return 0.5 * (1.0 + erf(z/1.41421356237))
 
 
 def categorify_dict(state):
