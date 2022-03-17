@@ -81,6 +81,8 @@ class HistoricMatchSimulator:
         self.bowling_plan = self.sim_bowlers_for_innings()
         # returns a list of Bowlers to bowl out the remainder of the innings
 
+        self.live_match_state['implied_batting_team_prob'] = \
+            self.historic_match_data['implied_batting_team_prob'].iloc[0]
         while self.innings == 1:
             while (self.over <= 20) and (self.batting_team.bat_wkts < 10):
                 self.sim_over()
@@ -88,6 +90,8 @@ class HistoricMatchSimulator:
                 return [self.batting_team.name, self.batting_team.bat_total, self.batting_team.bat_wkts]
             else:
                 self.change_inns()
+                self.live_match_state['implied_batting_team_prob'] \
+                    = self.historic_match_data[lambda x: x.innings == self.innings].iloc[0]
                 self.bowling_plan = self.sim_bowlers_for_innings()
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
