@@ -31,6 +31,7 @@ class HistoricMatchSimulator:
         self.live_match_state = dict()
         self.live_match_state['event_name'] = self.match_row['event_name']
         self.live_match_state['avg_ground_rpo'] = self.match_row['avg_ground_rpo']
+        self.live_match_state['runs_required'] = 0
         # initialise match state
         self.innings = 1
         self.over = 1
@@ -61,6 +62,7 @@ class HistoricMatchSimulator:
         # initial match state is now a list of 'balls' i.e. rows from dataframe, comprising history of match until now.
         if initial_match_state:
             latest_ball = initial_match_state[-1]
+            self.live_match_state['runs_required'] = latest_ball['runs_required']
             self.innings = latest_ball['innings']
             self.over = latest_ball['over']
             self.ball = latest_ball['legal_balls_in_innings_b4b'] % 6
