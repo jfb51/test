@@ -13,10 +13,12 @@ class SimpleHistoricTeam:
         self.simulated_target = simulated_target
 
         if self.name == self.match_row['setting_team']:
-            self.batters = [Batter(name, pp, career_batting_data) for name, pp in self.match_row['setting_players'].items()]
+            self.batters = [Batter(name, pp, career_batting_data, i) for i, (name, pp)
+                            in enumerate(self.match_row['setting_players'].items())]
             self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['setting_bowlers'].items()]
         else:
-            self.batters = [Batter(name, pp, career_batting_data) for name, pp in self.match_row['chasing_players'].items()]
+            self.batters = [Batter(name, pp, career_batting_data, i) for i, (name, pp)
+                            in enumerate(self.match_row['chasing_players'].items())]
             self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['chasing_bowlers'].items()]
 
         self.batting_order = {i + 1: x for i, x in enumerate(self.batters)}  # batting order
@@ -110,7 +112,6 @@ class SimpleHistoricTeam:
         self.partnership_runs = 0
         if self.bat_wkts < 10:
             self.onstrike = self.batting_order[self.bat_wkts + 2]
-            self.onstrike.current_match_stats['batting_position_bat'] = self.bat_wkts + 2
 
     def new_over(self):
         # module to start a new over

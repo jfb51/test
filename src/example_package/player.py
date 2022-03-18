@@ -13,7 +13,7 @@ class Bowler:
 
 
 class Batter:
-    def __init__(self, name, pp, historic_career_stats, current_match_stats=None):
+    def __init__(self, name, pp, historic_career_stats, i, current_match_stats=None):
         batter_in_game_attributes = ['batting_position_bat', 'striker_runs_b4b', 'striker_balls_faced_b4b',
                                      'strike_rate_b4b']
         self.name = name
@@ -23,4 +23,5 @@ class Batter:
         if current_match_stats:
             self.current_match_stats = current_match_stats[batter_in_game_attributes]
         else:
-            self.current_match_stats = {c: 0 for c in batter_in_game_attributes}
+            self.current_match_stats['batting_position_bat'] = i
+            self.current_match_stats.update({c: 0 for c in batter_in_game_attributes[1:]})
