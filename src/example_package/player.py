@@ -23,5 +23,5 @@ class Batter:
         if current_match_stats:
             self.current_match_stats = current_match_stats[batter_in_game_attributes]
         else:
-            self.current_match_stats.update({c: 0 for c in batter_in_game_attributes})
+            self.current_match_stats = {c: 0 for c in batter_in_game_attributes}
 
