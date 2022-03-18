@@ -186,7 +186,7 @@ class HistoricMatchSimulator:
 
         if self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] > 0:
             self.bowling_team.bowler.current_match_stats['bowler_er_b4b'] = \
-                self.bowling_team.bowler.current_match_stats['bowler_runs_b4b']/\
+                6 * self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] /\
                 self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
         else:
             self.bowling_team.bowler.current_match_stats['bowler_er_b4b'] = 0
@@ -200,6 +200,7 @@ class HistoricMatchSimulator:
             self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
                                                                   self.live_match_state['legal_balls_remaining'])
 
+        #uh-oh, problemo... I am doubling up on some keys, and not populating the batting order properly
         self.regressors = self.live_match_state.copy()
         self.regressors.update(self.bowling_team.bowler.current_match_stats)
         self.regressors.update(self.bowling_team.bowler.historic_career_stats)

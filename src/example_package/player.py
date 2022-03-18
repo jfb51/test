@@ -14,7 +14,7 @@ class Bowler:
 
 class Batter:
     def __init__(self, name, pp, historic_career_stats, current_match_stats=None):
-        batter_in_game_attributes = ['batting_position', 'striker_runs_b4b', 'striker_balls_faced_b4b',
+        batter_in_game_attributes = ['batting_position_bat', 'striker_runs_b4b', 'striker_balls_faced_b4b',
                                      'strike_rate_b4b']
         self.name = name
         self.pp = pp
