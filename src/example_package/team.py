@@ -112,6 +112,7 @@ class SimpleHistoricTeam:
         self.partnership_runs = 0
         if self.bat_wkts < 10:
             self.onstrike = self.batting_order[self.bat_wkts + 2]
+            self.onstrike.current_match_stats['batting_position_bat'] = self.bat_wkts + 2
 
     def new_over(self):
         # module to start a new over

@@ -202,10 +202,10 @@ class HistoricMatchSimulator:
 
         #uh-oh, problemo... I am doubling up on some keys, and not populating the batting order properly
         self.regressors = self.live_match_state.copy()
-        self.regressors.update(self.bowling_team.bowler.current_match_stats)
         self.regressors.update(self.bowling_team.bowler.historic_career_stats)
-        self.regressors.update(self.batting_team.onstrike.current_match_stats)
+        self.regressors.update(self.bowling_team.bowler.current_match_stats)
         self.regressors.update(self.batting_team.onstrike.historic_career_stats)
+        self.regressors.update(self.batting_team.onstrike.current_match_stats)
 
         outcomes = ['0', '1', '2', '3', '4', '6', 'w', 'nb', 'W']
 
