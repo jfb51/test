@@ -4,8 +4,8 @@ from scipy.signal import savgol_filter
 from collections import OrderedDict
 import numpy as np
 from collections import Counter
-from operator import itemgetter
-from example_package.util import phi, categorify_dict, remove_useless_regression_model_params
+from example_package.util import phi, categorify_dict, remove_useless_regression_model_params, \
+    calculate_probit_model_probability
 
 
 class HistoricMatchSimulator:
@@ -34,6 +34,7 @@ class HistoricMatchSimulator:
         self.live_match_state['runs_required'] = 0
         self.live_match_state['innings_runs_b4b'] = 0
         self.live_match_state['required_run_rate'] = 0
+        self.career_bowling_data_dict = self.career_bowling_data.droplevel(1).to_dict(orient='index')
 
         # initialise match state
         self.innings = 1
@@ -87,8 +88,8 @@ class HistoricMatchSimulator:
                 self.chasing_team = self.batting_team.name
                 self.setting_team = self.bowling_team.name
 
-        self.bowling_plan = self.sim_bowlers_for_innings()
-        # returns a list of Bowlers to bowl out the remainder of the innings
+        self.bowling_plan = self.sim_bowlers_for_innings(self.over)
+
         self.live_match_state['partnership_runs_b4b'] = self.batting_team.partnership_runs
         self.live_match_state['implied_batting_team_prob'] = \
             self.historic_match_data['implied_batting_team_prob'].iloc[0]
@@ -101,7 +102,7 @@ class HistoricMatchSimulator:
                 self.change_inns()
                 self.live_match_state['implied_batting_team_prob'] \
                     = self.historic_match_data[lambda x: x.innings == self.innings]['implied_batting_team_prob'].iloc[0]
-                self.bowling_plan = self.sim_bowlers_for_innings()
+                self.bowling_plan = self.sim_bowlers_for_innings(self.over)
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
@@ -200,7 +201,6 @@ class HistoricMatchSimulator:
             self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
                                                                   self.live_match_state['legal_balls_remaining'])
 
-        #uh-oh, problemo... I am doubling up on some keys, and not populating the batting order properly
         self.regressors = self.live_match_state.copy()
         self.regressors.update(self.bowling_team.bowler.historic_career_stats)
         self.regressors.update(self.bowling_team.bowler.current_match_stats)
@@ -218,15 +218,15 @@ class HistoricMatchSimulator:
         # the model that we pick is unlikely to change by ball, so can move out of critical loop.
 
         # wide
-        p_wide = self.calculate_probit_model_probability(self.wide_model)
+        p_wide = calculate_probit_model_probability(self.regressors, self.wide_model)
         # nb
-        p_nb = self.calculate_probit_model_probability(self.nb_model)
+        p_nb = calculate_probit_model_probability(self.regressors, self.nb_model)
         # wickets
-        p_wicket = self.calculate_probit_model_probability(self.wicket_model)
+        p_wicket = calculate_probit_model_probability(self.regressors, self.wicket_model)
         # runs - runs model is now 5 probit models - key is condition, then value is a list of models
         p_runs = []
         for m in [self.dot_model, self.one_model, self.two_model, self.three_model, self.four_model, self.six_model]:
-            p_runs = np.append(p_runs, self.calculate_probit_model_probability(m))
+            p_runs = np.append(p_runs, calculate_probit_model_probability(self.regressors, m))
         # sum of runs should be close to 1 but may not be.
         p_runs = p_runs/sum(p_runs)
 
@@ -381,67 +381,75 @@ class HistoricMatchSimulator:
         self.ball = 0
         self.innings = 2
 
-    def sim_bowlers_for_innings(self):
+    def sim_bowlers_for_innings(self, over):
         # module to simulate bowlers who will bowl throughout the innings.
         # NB this simple at the moment, we don't change in response to the progression of the innings yet, we just
         # assume the captain decides on all bowlers at start of innings and sticks with this plan.
         max_possible_overs = 4
         bowled_over_cols = ['bowled_over_{}_bowl'.format(i) for i in range(1, 21)]
         overs_bowled_cols = ['overs_bowled_after_{}_bowl'.format(i) for i in range(1, 21)]
-        irl_columns = ['bowled_over_{}_irl'.format(i) for i in range(1, 21)]
-        irl_ob_columns = ['overs_bowled_after_{}_irl'.format(i) for i in range(1, 21)]
+        bowled_prev_match_cols = ['bowled_over_{}_prev_match_bowl'.format(i) for i in range(1, 21)]
 
         potential_bowlers = [n.name for n in self.bowling_team.bowlers]
-        bowler_careers = self.career_bowling_data.loc[potential_bowlers].droplevel(1)
+        bowler_careers = {k: v for k, v in self.career_bowling_data_dict.items() if k in potential_bowlers}
 
-        for i in range(1, 21):
-            bowler_careers = bowler_careers.rename(columns={bowled_over_cols[i - 1]: irl_columns[i - 1]})
-            bowler_careers = bowler_careers.rename(columns={overs_bowled_cols[i - 1]: irl_ob_columns[i - 1]})
+        for b in bowler_careers.keys():
+            for c in bowled_prev_match_cols:
+                if np.isnan(bowler_careers[b][c]):
+                    bowler_careers[b][c] = 0
 
         # special case is very first ball, no one has been picked to bowl
-        if ~(self.over == 1 & self.ball == 0):
+        if over == 0:
             counter = 0
         else:
-            bowler_careers[bowled_over_cols[:self.over]] = bowler_careers[irl_columns[:self.over]]
-            bowler_careers[overs_bowled_cols[:self.over]] = bowler_careers[irl_ob_columns[:self.over]]
-            outcome = bowler_careers[lambda x: x['bowled_over_{}_bowl'.format(self.over)]['name']]
-            counter = self.over
+            outcome = [b for b in bowler_careers.keys() if bowler_careers[b]['bowled_over_{}_bowl'.format(over)] == 1][
+                0]
+            counter = over
 
-        # drop any bowlers who have bowled out
-        bowler_careers = bowler_careers.drop(
-            bowler_careers[bowler_careers['overs_bowled_after_{}_irl'.format(self.over)] == max_possible_overs].index)
+        bowler_careers = {k: v for k, v in bowler_careers.items() if
+                          bowler_careers[k]['overs_bowled_after_{}_bowl'.format(over)] < max_possible_overs}
 
         remaining_bowlers = []
 
         for i in range(counter + 1, 21):
             model = self.bowling_models['bowling_model_{}'.format(i)]
-            regressor_names = model.model.exog_names[1:]
+
             if i == 1:
-                bowler_prob = model.predict(bowler_careers[regressor_names].fillna(0))
-                bowler_prob = bowler_prob / sum(bowler_prob)
-                outcome = np.random.choice(a=bowler_prob.index, size=1, p=bowler_prob.values)[0]
-                bowler_careers.loc[outcome, 'bowled_over_{}_bowl'.format(i)] = 1
-                bowler_careers.loc[outcome, 'overs_bowled_after_{}_bowl'.format(i)] = 1
-                bowler_careers['bowled_over_{}_bowl'.format(i)] = bowler_careers['bowled_over_{}_bowl'.format(i)].fillna(0)
-                bowler_careers['overs_bowled_after_{}_bowl'.format(i)] = bowler_careers[
-                    'overs_bowled_after_{}_bowl'.format(i)].fillna(0)
+                p_b = []
+                for b in bowler_careers.keys():
+                    p_b = np.append(p_b, calculate_probit_model_probability(bowler_careers[b], model))
+                bowler_prob = p_b / sum(p_b)
+                outcome = np.random.choice(a=list(bowler_careers.keys()), size=1, p=bowler_prob)[0]
+                for b in bowler_careers.keys():
+                    if b == outcome:
+                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 1
+                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = 1
+                    else:
+                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 0
+                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = 0
             else:
                 previous_bowler = outcome
-                if previous_bowler in bowler_careers.index:
+                p_b = []
+                temp = {k: v for k, v in bowler_careers.items() if k != previous_bowler}
+                for b in temp.keys():
+                    p_b = np.append(p_b, calculate_probit_model_probability(temp[b], model))
                     # want to temporarily drop bowler who bowled the last over,
                     # and perma-drop anyone who has bowled 4 overs.
-                    bowler_prob = model.predict(bowler_careers.drop(previous_bowler)[regressor_names].fillna(0))
-                else:
-                    bowler_prob = model.predict(bowler_careers[regressor_names].fillna(0))
-                bowler_prob = bowler_prob / sum(bowler_prob)
-                outcome = np.random.choice(a=bowler_prob.index, size=1, p=bowler_prob.values)[0]
-                bowler_careers.loc[outcome, 'bowled_over_{}_bowl'.format(i)] = 1
-                bowler_careers['overs_bowled_after_{}_bowl'.format(i)] = bowler_careers[
-                                                                        'overs_bowled_after_{}_bowl'.format(i - 1)] + \
-                                                                    bowler_careers[
-                                                                        'bowled_over_{}_bowl'.format(i)]
-                if bowler_careers.loc[outcome, 'overs_bowled_after_{}_bowl'.format(i)] == max_possible_overs:
-                    bowler_careers = bowler_careers.drop(outcome)
+                bowler_prob = p_b / sum(p_b)
+                outcome = np.random.choice(a=list(temp.keys()), size=1, p=bowler_prob)[0]
+                for b in bowler_careers.keys():
+                    if b == outcome:
+                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 1
+                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = \
+                            bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i - 1)] + bowler_careers[b][
+                                'bowled_over_{}_bowl'.format(i)]
+                    else:
+                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 0
+                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = bowler_careers[b][
+                            'overs_bowled_after_{}_bowl'.format(i - 1)]
+
+                if bowler_careers[outcome]['overs_bowled_after_{}_bowl'.format(i)] == max_possible_overs:
+                    del bowler_careers[outcome]
 
             for b in self.bowling_team.bowlers:
                 if b.name == outcome:
@@ -534,12 +542,3 @@ class HistoricMatchSimulator:
             j = 0
             scores = []
         return simulated_first_innings_scores
-
-    def calculate_probit_model_probability(self, model):
-        items = itemgetter(*model.model_variables)(self.regressors)
-        dz = dict(zip(model.model_variables, items))
-        dz['Intercept'] = 1
-        state = categorify_dict(dz)
-        relevant_params = remove_useless_regression_model_params(state, model.model_params)
-        z = sum(state[key] * relevant_params[key] for key in state)
-        return phi(z)

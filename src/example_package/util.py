@@ -1,6 +1,7 @@
 import numpy as np
 from collections import namedtuple, OrderedDict
 from math import erf
+from operator import itemgetter
 
 
 def kelly_bet(row, commission=0.05, bankroll=1000):
@@ -59,3 +60,14 @@ def remove_useless_regression_model_params(state, params):
         if param not in state.keys():
             del smol[param]
     return OrderedDict(sorted(smol.items()))
+
+
+def calculate_probit_model_probability(reg, model):
+    items = itemgetter(*model.model_variables)(reg)
+    dz = dict(zip(model.model_variables, items))
+    dz['Intercept'] = 1
+    state = categorify_dict(dz)
+    relevant_params = remove_useless_regression_model_params(state, model.model_params)
+    z = sum(state[key] * relevant_params[key] for key in state)
+    return phi(z)
+
