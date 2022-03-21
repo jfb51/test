@@ -6,6 +6,7 @@ import numpy as np
 from collections import Counter
 from example_package.util import phi, categorify_dict, remove_useless_regression_model_params, \
     calculate_probit_model_probability
+from random import choices
 
 
 class HistoricMatchSimulator:
@@ -236,7 +237,7 @@ class HistoricMatchSimulator:
         # note that p_runs + p_wicket + p_wide + p_nb = 1, and the runs model must be adjusted for this!
         probabilities = np.append(p_runs, [p_wide, p_nb, p_wicket])  # 10%
         # sample from predicted distribution
-        outcome = np.random.choice(a=outcomes, size=1, p=probabilities)  # 38%
+        outcome = choices(outcomes, probabilities)  # 38%
 
         #todo, our historic definition of balls faced is slightly wrong (wides are not a ball faced, no balls are)
 
@@ -419,7 +420,7 @@ class HistoricMatchSimulator:
                 for b in bowler_careers.keys():
                     p_b = np.append(p_b, calculate_probit_model_probability(bowler_careers[b], model))
                 bowler_prob = p_b / sum(p_b)
-                outcome = np.random.choice(a=list(bowler_careers.keys()), size=1, p=bowler_prob)[0]
+                outcome = choices(list(bowler_careers.keys()), bowler_prob)[0]
                 for b in bowler_careers.keys():
                     if b == outcome:
                         bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 1
@@ -436,7 +437,7 @@ class HistoricMatchSimulator:
                     # want to temporarily drop bowler who bowled the last over,
                     # and perma-drop anyone who has bowled 4 overs.
                 bowler_prob = p_b / sum(p_b)
-                outcome = np.random.choice(a=list(temp.keys()), size=1, p=bowler_prob)[0]
+                outcome = choices(list(temp.keys()), bowler_prob)[0]
                 for b in bowler_careers.keys():
                     if b == outcome:
                         bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 1
