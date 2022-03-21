@@ -4,8 +4,7 @@ from scipy.signal import savgol_filter
 from collections import OrderedDict
 import numpy as np
 from collections import Counter
-from example_package.util import phi, categorify_dict, remove_useless_regression_model_params, \
-    calculate_probit_model_probability
+from example_package.util import calculate_probit_model_probability
 from random import choices
 
 
