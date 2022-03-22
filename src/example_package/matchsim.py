@@ -207,8 +207,6 @@ class HistoricMatchSimulator:
         self.regressors.update(self.batting_team.onstrike.historic_career_stats)
         self.regressors.update(self.batting_team.onstrike.current_match_stats)
 
-        print(self.regressors)
-
         outcomes = ['0', '1', '2', '3', '4', '6', 'w', 'nb', 'W']
 
         # inn = [self.innings == 2]
@@ -238,7 +236,7 @@ class HistoricMatchSimulator:
         # note that p_runs + p_wicket + p_wide + p_nb = 1, and the runs model must be adjusted for this!
         probabilities = np.append(p_runs, [p_wide, p_nb, p_wicket])  # 10%
         # sample from predicted distribution
-        outcome = choices(outcomes, probabilities)  # 38%
+        outcome = choices(outcomes, probabilities)[0] # 38%
 
         #todo, our historic definition of balls faced is slightly wrong (wides are not a ball faced, no balls are)
 
