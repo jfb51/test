@@ -102,7 +102,7 @@ class HistoricMatchSimulator:
                 self.change_inns()
                 self.live_match_state['implied_batting_team_prob'] \
                     = self.historic_match_data[lambda x: x.innings == self.innings]['implied_batting_team_prob'].iloc[0]
-                self.bowling_plan = self.sim_bowlers_for_innings(self.over)
+                self.bowling_plan = self.sim_bowlers_for_innings()
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
