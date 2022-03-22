@@ -207,6 +207,8 @@ class HistoricMatchSimulator:
         self.regressors.update(self.batting_team.onstrike.historic_career_stats)
         self.regressors.update(self.batting_team.onstrike.current_match_stats)
 
+        print(self.regressors)
+
         outcomes = ['0', '1', '2', '3', '4', '6', 'w', 'nb', 'W']
 
         # inn = [self.innings == 2]
