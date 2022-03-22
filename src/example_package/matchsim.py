@@ -88,7 +88,7 @@ class HistoricMatchSimulator:
                 self.chasing_team = self.batting_team.name
                 self.setting_team = self.bowling_team.name
 
-        self.bowling_plan = self.sim_bowlers_for_innings(self.over)
+        self.bowling_plan = self.sim_bowlers_for_innings()
 
         self.live_match_state['partnership_runs_b4b'] = self.batting_team.partnership_runs
         self.live_match_state['implied_batting_team_prob'] = \
