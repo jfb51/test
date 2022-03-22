@@ -381,7 +381,7 @@ class HistoricMatchSimulator:
         self.ball = 0
         self.innings = 2
 
-    def sim_bowlers_for_innings(self, over):
+    def sim_bowlers_for_innings(self):
         # module to simulate bowlers who will bowl throughout the innings.
         # NB this simple at the moment, we don't change in response to the progression of the innings yet, we just
         # assume the captain decides on all bowlers at start of innings and sticks with this plan.
@@ -399,14 +399,14 @@ class HistoricMatchSimulator:
                     bowler_careers[b][c] = 0
 
         # special case is very first ball, no one has been picked to bowl
-        if self.over == 1 & self.ball == 0:
+        if (self.over == 1) & (self.ball == 0):
             counter = 0
         else:
-            outcome = [b for b in bowler_careers.keys() if bowler_careers[b]['bowled_over_{}_bowl'.format(over)] == 1][
+            outcome = [b for b in bowler_careers.keys() if bowler_careers[b]['bowled_over_{}_bowl'.format(self.over)] == 1][
                 0]
-            counter = over
+            counter = self.over
             bowler_careers = {k: v for k, v in bowler_careers.items() if
-                              bowler_careers[k]['overs_bowled_after_{}_bowl'.format(over)] < max_possible_overs}
+                              bowler_careers[k]['overs_bowled_after_{}_bowl'.format(self.over)] < max_possible_overs}
 
         remaining_bowlers = []
 
