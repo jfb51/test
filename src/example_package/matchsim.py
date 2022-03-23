@@ -231,14 +231,14 @@ class HistoricMatchSimulator:
             self.bowling_team.bowler.current_match_stats['bowler_dots_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
 
         elif outcome == '1':
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 1
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
@@ -256,7 +256,7 @@ class HistoricMatchSimulator:
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 2
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 2
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
@@ -273,7 +273,7 @@ class HistoricMatchSimulator:
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 3
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 3
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
@@ -291,7 +291,7 @@ class HistoricMatchSimulator:
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 4
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 4
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
@@ -308,7 +308,7 @@ class HistoricMatchSimulator:
             self.ball += 1
             self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] += 6
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 6
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
@@ -333,7 +333,7 @@ class HistoricMatchSimulator:
             self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b'] -= 1
             if self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b'] != 0:
                 self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
-                    self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
+                    100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                     self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             else:
                 self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = 0
