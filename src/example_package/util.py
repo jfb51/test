@@ -3,7 +3,6 @@ from collections import namedtuple, OrderedDict
 from math import erf
 from operator import itemgetter
 
-
 def kelly_bet(row, commission=0.05, bankroll=1000):
     if row.side == "None":
         return 0
@@ -62,6 +61,17 @@ def remove_useless_regression_model_params(state, params):
     return OrderedDict(sorted(smol.items()))
 
 
+def remove_useless_regression_model_params_multinomial(state, params):
+    smol = OrderedDict()
+    for outcome, p in params.items():
+        smoler = p.copy()
+        for param in p.keys():
+            if param not in state.keys():
+                del smoler[param]
+        smol[outcome] = OrderedDict(sorted(smoler.items()))
+    return smol
+
+
 def calculate_probit_model_probability(reg, model):
     items = itemgetter(*model.model_variables)(reg)
     dz = dict(zip(model.model_variables, items))
@@ -70,4 +80,23 @@ def calculate_probit_model_probability(reg, model):
     relevant_params = remove_useless_regression_model_params(state, model.model_params)
     z = sum(state[key] * relevant_params[key] for key in state)
     return phi(z)
+
+
+def calculate_mnlogit_model_probabilities(reg, model):
+    items = itemgetter(*model.model_variables)(reg)
+    dz = dict(zip(model.model_variables, items))
+    dz['Intercept'] = 1
+    state = categorify_dict(dz)
+    relevant_params = remove_useless_regression_model_params_multinomial(state, model.model_params)
+    exp_sum = []
+    for k, v in relevant_params.items():
+        exp_sum.append(2.71828**(sum(v[param] * state[param] for param in v.keys())))
+    p_dot = 1 / (1 + sum(exp_sum))
+    p_one = p_dot * exp_sum[0]
+    p_two = p_dot * exp_sum[1]
+    p_three = p_dot * exp_sum[2]
+    p_four = p_dot * exp_sum[3]
+    p_six = p_dot * exp_sum[4]
+
+    return [p_dot, p_one, p_two, p_three, p_four, p_six]
 
