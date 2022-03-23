@@ -4,22 +4,16 @@ from scipy.signal import savgol_filter
 from collections import OrderedDict
 import numpy as np
 from collections import Counter
-from example_package.util import calculate_probit_model_probability
+from example_package.util import calculate_probit_model_probability, calculate_mnlogit_model_probabilities
 from random import choices
 
 
 class HistoricMatchSimulator:
     def __init__(self, match_id, match_row, historic_match_data, career_bowling_data,
-                 career_batting_data, wicket_models, dot_models, one_models, two_models, three_models, four_models,
-                 six_models, wide_models, nb_models, bowling_models):
+                 career_batting_data, wicket_models, runs_models, wide_models, nb_models, bowling_models):
         self.match_id = str(match_id)
         self.wicket_models = wicket_models
-        self.dot_models = dot_models
-        self.one_models = one_models
-        self.two_models = two_models
-        self.three_models = three_models
-        self.four_models = four_models
-        self.six_models = six_models
+        self.runs_models = runs_models
         self.bowling_models = bowling_models
         self.wide_models = wide_models
         self.nb_models = nb_models
@@ -136,15 +130,9 @@ class HistoricMatchSimulator:
             if model.condition(self):
                 self.wicket_model = model
 
-        # be careful as threes only have one model
-        for i, model in enumerate(self.dot_models):
+        for model in enumerate(self.runs_models):
             if model.condition(self):
-                self.dot_model = model
-                self.one_model = self.one_models[i]
-                self.two_model = self.two_models[i]
-                self.three_model = self.three_models[i]
-                self.four_model = self.four_models[i]
-                self.six_model = self.six_models[i]
+                self.runs_model = model
 
         self.live_match_state['is_middle_overs'] = (self.over > 6) & (self.over < 17)
         self.live_match_state['is_death_overs'] = self.over > 16
@@ -223,20 +211,16 @@ class HistoricMatchSimulator:
         p_nb = calculate_probit_model_probability(self.regressors, self.nb_model)
         # wickets
         p_wicket = calculate_probit_model_probability(self.regressors, self.wicket_model)
-        # runs - runs model is now 5 probit models - key is condition, then value is a list of models
-        p_runs = []
-        for m in [self.dot_model, self.one_model, self.two_model, self.three_model, self.four_model, self.six_model]:
-            p_runs = np.append(p_runs, calculate_probit_model_probability(self.regressors, m))
-        # sum of runs should be close to 1 but may not be.
-        p_runs = p_runs/sum(p_runs)
+
+        p_runs = calculate_mnlogit_model_probabilities(self.regressors, self.runs_model)
 
         # now normalise runs
         p_runs = p_runs * (1 - (p_nb + p_wide + p_wicket))
 
         # note that p_runs + p_wicket + p_wide + p_nb = 1, and the runs model must be adjusted for this!
-        probabilities = np.append(p_runs, [p_wide, p_nb, p_wicket])  # 10%
+        probabilities = np.append(p_runs, [p_wide, p_nb, p_wicket])
         # sample from predicted distribution
-        outcome = choices(outcomes, probabilities)[0] # 38%
+        outcome = choices(outcomes, probabilities)[0]
 
         #todo, our historic definition of balls faced is slightly wrong (wides are not a ball faced, no balls are)
 
