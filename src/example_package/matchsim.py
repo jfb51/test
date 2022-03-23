@@ -215,7 +215,7 @@ class HistoricMatchSimulator:
         p_runs = calculate_mnlogit_model_probabilities(self.regressors, self.runs_model)
 
         # now normalise runs
-        p_runs = p_runs * (1 - (p_nb + p_wide + p_wicket))
+        p_runs = [r * (1 - (p_nb + p_wide + p_wicket)) for r in p_runs]
 
         # note that p_runs + p_wicket + p_wide + p_nb = 1, and the runs model must be adjusted for this!
         probabilities = np.append(p_runs, [p_wide, p_nb, p_wicket])
