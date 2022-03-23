@@ -130,7 +130,7 @@ class HistoricMatchSimulator:
             if model.condition(self):
                 self.wicket_model = model
 
-        for model in enumerate(self.runs_models):
+        for model in self.runs_models:
             if model.condition(self):
                 self.runs_model = model
 
