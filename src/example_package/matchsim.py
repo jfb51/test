@@ -342,8 +342,8 @@ class HistoricMatchSimulator:
                 self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = 0
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_extras'] += 1
-            self.live_match_state['over_runs_b4b'] += 6
-            self.live_match_state['innings_runs_b4b'] += 6
+            self.live_match_state['over_runs_b4b'] += 1
+            self.live_match_state['innings_runs_b4b'] += 1
             self.batting_team.bat_total += 1
             self.bowling_team.bwl_total += 1
             self.batting_team.partnership_runs += 1

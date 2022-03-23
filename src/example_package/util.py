@@ -44,6 +44,7 @@ def phi(z):
 
 
 def categorify_dict(state):
+    #todo: I think the ordering is unnecessary?
     dy = state.copy()
     for k, v in state.items():
         if type(v) == str:
@@ -54,6 +55,7 @@ def categorify_dict(state):
 
 
 def remove_useless_regression_model_params(state, params):
+    #todo: I think the ordering is unnecessary?
     smol = params.copy()
     for param in params.keys():
         if param not in state.keys():
