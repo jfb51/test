@@ -33,7 +33,9 @@ class SimpleHistoricTeam:
         self.bwl_wkts = 0
 
         self.onstrike = self.batting_order[1]
+        self.onstrike.current_match_stats['batting_position_bat'] = 1
         self.offstrike = self.batting_order[2]
+        self.offstrike.current_match_stats['batting_position_bat'] = 2
         self.bat_bwl = ''
 
         if self.initial_match_state is not None:
@@ -91,7 +93,9 @@ class SimpleHistoricTeam:
                     self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
                     self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
                     self.onstrike = self.batting_order[1]
+                    self.onstrike.current_match_stats['batting_position_bat'] = 1
                     self.offstrike = self.batting_order[2]
+                    self.offstrike.current_match_stats['batting_position_bat'] = 2
                 # and it's the second innings, then I've batted already
                 else:
                     if self.simulated_target is not None:
@@ -104,7 +108,9 @@ class SimpleHistoricTeam:
                     self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
                     self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
                     self.onstrike = self.batting_order[1]
+                    self.onstrike.current_match_stats['batting_position_bat'] = 1
                     self.offstrike = self.batting_order[2]
+                    self.offstrike.current_match_stats['batting_position_bat'] = 2
 
     def wicket(self):
         # module for updating the team after a wicket
