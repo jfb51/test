@@ -64,13 +64,13 @@ def remove_useless_regression_model_params(state, params):
 
 
 def remove_useless_regression_model_params_multinomial(state, params):
-    smol = OrderedDict()
+    smol = {}
     for outcome, p in params.items():
         smoler = p.copy()
         for param in p.keys():
             if param not in state.keys():
                 del smoler[param]
-        smol[outcome] = OrderedDict(sorted(smoler.items()))
+        smol[outcome] = smoler
     return smol
 
 
