@@ -60,7 +60,7 @@ def remove_useless_regression_model_params(state, params):
     for param in params.keys():
         if param not in state.keys():
             del smol[param]
-    return OrderedDict(sorted(smol.items()))
+    return smol
 
 
 def remove_useless_regression_model_params_multinomial(state, params):
