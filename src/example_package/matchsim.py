@@ -28,6 +28,7 @@ class HistoricMatchSimulator:
         self.live_match_state['runs_required'] = 0
         self.live_match_state['innings_runs_b4b'] = 0
         self.live_match_state['required_run_rate'] = 0
+        self.live_match_state['over_runs_b4b'] = 0
         self.career_bowling_data_dict = self.career_bowling_data.droplevel(1).to_dict(orient='index')
 
         # initialise match state
@@ -65,6 +66,7 @@ class HistoricMatchSimulator:
             self.live_match_state['innings_runs_b4b'] = latest_ball['innings_runs_b4b']
             self.live_match_state['over_runs_b4b'] = latest_ball['over_runs_b4b']
             self.live_match_state['required_run_rate'] = latest_ball['required_run_rate']
+            self.initial_over = int(latest_ball['over'])
             self.over = int(latest_ball['over'])
             self.ball = int(latest_ball['legal_balls_in_innings_b4b'] % 6)
             self.batting_team = SimpleHistoricTeam(latest_ball['batting_team'],
@@ -134,15 +136,15 @@ class HistoricMatchSimulator:
         self.live_match_state['is_middle_overs'] = (self.over > 6) & (self.over < 17)
         self.live_match_state['is_death_overs'] = self.over > 16
         self.live_match_state['is_powerplay'] = self.over < 6
-        self.live_match_state['over_runs_b4b'] = 0
         # need to tweak for BBL in 2020, 21 (19?)
-        self.bowling_team.bowler = self.bowling_plan[self.over - 1]
+        self.bowling_team.bowler = self.bowling_plan[self.over - self.initial_over]
 
         while (self.ball < 6) and (self.batting_team.bat_wkts < 10) and \
                 ((self.innings == 1) or (self.batting_team.bat_total <= self.bowling_team.bat_total)):
             self.sim_ball()
 
         self.ball = 0
+        self.live_match_state['over_runs_b4b'] = 0
         self.batting_team.new_over()
         self.bowling_team.new_over()
 
