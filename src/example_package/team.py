@@ -50,6 +50,11 @@ class SimpleHistoricTeam:
                 if len(off_strike_stats) > 0:
                     off_strike_stats = off_strike_stats[-1]
                     self.offstrike.insert_initial_stats(off_strike_stats)
+                else:
+                    # this is a corner case when batters have crossed after a wicket and
+                    # the off-strike batter has not faced a ball
+                    self.offstrike.current_match_stats['batting_position_bat'] = \
+                        latest_ball['wickets_in_innings_b4b'] + 2
                 self.onstrike.insert_initial_stats(latest_ball)
                 # and it's the first innings, then I haven't bowled
                 if latest_ball['innings'] == 1:
