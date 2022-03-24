@@ -64,9 +64,9 @@ class SimpleHistoricTeam:
                     self.bwl_wkts = 0
                 # and it's the second innings, I've already bowled and am chasing
                 else:
-                    self.bat_total = self.initial_match_state['innings_runs_b4b']
-                    self.bat_wkts = self.initial_match_state['wickets_in_innings_b4b']
-                    self.partnership_runs = self.initial_match_state['partnership_runs_b4b']
+                    self.bat_total = latest_ball['innings_runs_b4b']
+                    self.bat_wkts = latest_ball['wickets_in_innings_b4b']
+                    self.partnership_runs = latest_ball['partnership_runs_b4b']
                     if self.simulated_target is not None:
                         self.bwl_total = self.simulated_target
                     else:
@@ -84,12 +84,12 @@ class SimpleHistoricTeam:
                     # instantiate a new bowler class with the current stats
                     bowler.insert_initial_stats(other_bowler_stats)
                 # and it's the first innings, then I'm bowling
-                if self.initial_match_state['innings'] == 1:
+                if latest_ball['innings'] == 1:
                     self.bat_total = 0
                     self.bat_wkts = 0
                     self.bat_bwl = 'bowl'
-                    self.bwl_total = self.initial_match_state['innings_runs_b4b']
-                    self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
+                    self.bwl_total = latest_ball['innings_runs_b4b']
+                    self.bwl_wkts = latest_ball['wickets_in_innings_b4b']
                     self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
                     self.onstrike = self.batting_order[1]
                     self.onstrike.current_match_stats['batting_position_bat'] = 1
@@ -103,8 +103,8 @@ class SimpleHistoricTeam:
                         self.bat_total = self.match_row['first_innings_score']
                     self.bat_wkts = 'N/A'
                     self.bat_bwl = 'bowl'
-                    self.bwl_total = self.initial_match_state['innings_runs_b4b']
-                    self.bwl_wkts = self.initial_match_state['wickets_in_innings_b4b']
+                    self.bwl_total = latest_ball['innings_runs_b4b']
+                    self.bwl_wkts = latest_ball['wickets_in_innings_b4b']
                     self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
                     self.onstrike = self.batting_order[1]
                     self.onstrike.current_match_stats['batting_position_bat'] = 1
