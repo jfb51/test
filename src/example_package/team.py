@@ -43,19 +43,14 @@ class SimpleHistoricTeam:
             latest_ball = self.initial_match_state[-1]
             # if I'm the batting team
             if self.name == latest_ball['batting_team']:
-                # is this correct, or one ball short?
+                self.onstrike = self.batters[latest_ball['striker']]
+                self.offstrike = self.batters[latest_ball['non_striker']]
                 off_strike_stats = \
                     [b for b in self.initial_match_state if b['striker'] == latest_ball['non_striker']]
                 if len(off_strike_stats) > 0:
                     off_strike_stats = off_strike_stats[-1]
-                else:
-                    off_strike_stats = None
-                if self.name == self.match_row['setting_team']:
-                    players = self.match_row['setting_players']
-                else:
-                    players = self.match_row['chasing_players']
-                    self.onstrike.insert_initial_stats(latest_ball)
                     self.offstrike.insert_initial_stats(off_strike_stats)
+                self.onstrike.insert_initial_stats(latest_ball)
                 # and it's the first innings, then I haven't bowled
                 if latest_ball['innings'] == 1:
                     self.bat_total = latest_ball['innings_runs_b4b']
