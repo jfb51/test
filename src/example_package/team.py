@@ -52,10 +52,8 @@ class SimpleHistoricTeam:
                     players = self.match_row['setting_players']
                 else:
                     players = self.match_row['chasing_players']
-                    self.onstrike = Batter(latest_ball['striker'], players[latest_ball['striker']],
-                                           career_batting_data, latest_ball)
-                    self.offstrike = Batter(latest_ball['non_striker'], players[latest_ball['non_striker']],
-                                            career_batting_data, off_strike_stats)
+                    self.onstrike.insert_initial_stats(latest_ball)
+                    self.offstrike.insert_initial_stats(off_strike_stats)
                 # and it's the first innings, then I haven't bowled
                 if latest_ball['innings'] == 1:
                     self.bat_total = latest_ball['innings_runs_b4b']
@@ -84,7 +82,7 @@ class SimpleHistoricTeam:
                     # last ball the bowler has bowled
                     other_bowler_stats = [b for b in self.initial_match_state if b['bowler'] == bowler.name][-1]
                     # instantiate a new bowler class with the current stats
-                    bowler = Bowler(bowler.name, bowler.pp, bowler.historic_career_stats, other_bowler_stats)
+                    bowler.insert_initial_stats(other_bowler_stats)
                 # and it's the first innings, then I'm bowling
                 if self.initial_match_state['innings'] == 1:
                     self.bat_total = 0
