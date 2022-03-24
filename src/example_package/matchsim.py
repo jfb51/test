@@ -376,72 +376,70 @@ class HistoricMatchSimulator:
         # overs_bowled_cols = ['overs_bowled_after_{}_bowl'.format(i) for i in range(1, 21)]
         bowled_prev_match_cols = ['bowled_over_{}_prev_match_bowl'.format(i) for i in range(1, 21)]
 
-        potential_bowlers = [n.name for n in self.bowling_team.bowlers]
-        bowler_careers = {k: v for k, v in self.career_bowling_data_dict.items() if k in potential_bowlers}
+        potential_bowlers = self.bowling_team.bowlers.copy() # {name: Bowler}
+        # bowler_careers = {k: v for k, v in self.career_bowling_data_dict.items() if k in potential_bowlers}
 
-        for b in bowler_careers.keys():
+        for b in potential_bowlers.values():
             for c in bowled_prev_match_cols:
-                if np.isnan(bowler_careers[b][c]):
-                    bowler_careers[b][c] = 0
+                if np.isnan(b.historic_career_stats[c]):
+                    b.historic_career_stats[c] = 0
 
         # special case is very first ball, no one has been picked to bowl
         if (self.over == 1) & (self.ball == 0):
             counter = 0
+            bowling_plan = []
         else:
-            outcome = [b for b in bowler_careers.keys() if
-                       bowler_careers[b]['bowled_over_{}_bowl'.format(self.over)] == 1][0]
+            # look for which bowler bowled the current over irl
+            outcome = [b for b, v in potential_bowlers.items() if
+                       v.historic_career_stats['bowled_over_{}_bowl'.format(self.over)] == 1][0]
             counter = self.over
-            bowler_careers = {k: v for k, v in bowler_careers.items() if
-                              bowler_careers[k]['overs_bowled_after_{}_bowl'.format(self.over)] < max_possible_overs}
-
-        remaining_bowlers = []
+            potential_bowlers = {k: v for k, v in potential_bowlers.items() if
+                                 potential_bowlers[k].historic_career_stats['overs_bowled_after_{}_bowl'.format(self.over)] < max_possible_overs}
+            bowling_plan = [potential_bowlers[outcome]]
 
         for i in range(counter + 1, 21):
             model = self.bowling_models['bowling_model_{}'.format(i)]
 
             if i == 1:
                 p_b = []
-                for b in bowler_careers.keys():
-                    p_b = np.append(p_b, calculate_probit_model_probability(bowler_careers[b], model))
+                for n, b in potential_bowlers.items():
+                    p_b = np.append(p_b, calculate_probit_model_probability(b.historic_career_stats, model))
                 bowler_prob = p_b / sum(p_b)
-                outcome = choices(list(bowler_careers.keys()), bowler_prob)[0]
-                for b in bowler_careers.keys():
-                    if b == outcome:
-                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 1
-                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = 1
+                outcome = choices(list(potential_bowlers.keys()), bowler_prob)[0]
+                for n, b in potential_bowlers.items():
+                    if n == outcome:
+                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 1
+                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = 1
                     else:
-                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 0
-                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = 0
+                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 0
+                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = 0
             else:
                 previous_bowler = outcome
                 p_b = []
-                temp = {k: v for k, v in bowler_careers.items() if k != previous_bowler}
-                for b in temp.keys():
-                    p_b = np.append(p_b, calculate_probit_model_probability(temp[b], model))
+                temp = {k: v for k, v in potential_bowlers.items() if k != previous_bowler}
+                for n, b in temp.items():
+                    p_b = np.append(p_b, calculate_probit_model_probability(b.historic_career_stats, model))
                     # want to temporarily drop bowler who bowled the last over,
                     # and perma-drop anyone who has bowled 4 overs.
                 bowler_prob = p_b / sum(p_b)
                 outcome = choices(list(temp.keys()), bowler_prob)[0]
-                for b in bowler_careers.keys():
-                    if b == outcome:
-                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 1
-                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = \
-                            bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i - 1)] + bowler_careers[b][
-                                'bowled_over_{}_bowl'.format(i)]
+                for n, b in potential_bowlers.items():
+                    if n == outcome:
+                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 1
+                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = \
+                            b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i - 1)] + \
+                            b.historic_career_stats['bowled_over_{}_bowl'.format(i)]
                     else:
-                        bowler_careers[b]['bowled_over_{}_bowl'.format(i)] = 0
-                        bowler_careers[b]['overs_bowled_after_{}_bowl'.format(i)] = bowler_careers[b][
+                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 0
+                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = b.historic_career_stats[
                             'overs_bowled_after_{}_bowl'.format(i - 1)]
 
-                if bowler_careers[outcome]['overs_bowled_after_{}_bowl'.format(i)] == max_possible_overs:
-                    del bowler_careers[outcome]
+                if potential_bowlers[outcome].historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] \
+                        == max_possible_overs:
+                    del potential_bowlers[outcome]
+            bowling_plan.append(self.bowling_team.bowlers[outcome])
 
-            for b in self.bowling_team.bowlers:
-                if b.name == outcome:
-                    break
-            remaining_bowlers.append(b)
-
-        return remaining_bowlers
+        return bowling_plan
 
     # for an historic match, during the second innings, what is p(win|state of the game) for each ball in the innings?
     # note we cannot SavGol smooth these probabilities since this would use future information.

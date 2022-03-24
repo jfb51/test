@@ -1,7 +1,6 @@
 import numpy as np
 from example_package.player import Batter, Bowler
 
-
 class SimpleHistoricTeam:
     def __init__(self, name, match_row, career_bowling_data, career_batting_data, initial_match_state=None,
                  simulated_target=None):
@@ -13,15 +12,17 @@ class SimpleHistoricTeam:
         self.simulated_target = simulated_target
 
         if self.name == self.match_row['setting_team']:
-            self.batters = [Batter(name, pp, career_batting_data) for name, pp
-                            in self.match_row['setting_players'].items()]
-            self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['setting_bowlers'].items()]
+            self.batters = {name: Batter(pp, career_batting_data) for name, pp
+                            in self.match_row['setting_players'].items()}
+            self.bowlers = {name: Bowler(pp, career_bowling_data) for name, pp
+                            in self.match_row['setting_bowlers'].items()}
         else:
-            self.batters = [Batter(name, pp, career_batting_data) for name, pp
-                            in self.match_row['chasing_players'].items()]
-            self.bowlers = [Bowler(name, pp, career_bowling_data) for name, pp in self.match_row['chasing_bowlers'].items()]
+            self.batters = {name: Batter(pp, career_batting_data) for name, pp
+                            in self.match_row['chasing_players'].items()}
+            self.bowlers = {name: Bowler(pp, career_bowling_data) for name, pp
+                            in self.match_row['chasing_bowlers'].items()}
 
-        self.batting_order = {i + 1: x for i, x in enumerate(self.batters)}  # batting order
+        self.batting_order = {i + 1: x for i, x in enumerate(self.batters.values())}  # batting order
 
             # batting innings state
         self.bat_total = 0
@@ -42,6 +43,7 @@ class SimpleHistoricTeam:
             latest_ball = self.initial_match_state[-1]
             # if I'm the batting team
             if self.name == latest_ball['batting_team']:
+                # is this correct, or one ball short?
                 off_strike_stats = \
                     [b for b in self.initial_match_state if b['striker'] == latest_ball['non_striker']]
                 if len(off_strike_stats) > 0:
@@ -77,10 +79,10 @@ class SimpleHistoricTeam:
             else:
                 # names
                 bowler_names_so_far = set([b['bowler'] for b in self.initial_match_state])
-                bowlers_so_far = [b for b in self.bowlers if b.name in bowler_names_so_far]
-                for bowler in bowlers_so_far:
+                bowlers_so_far = {name: b for name, b in self.bowlers.items() if name in bowler_names_so_far}
+                for name, bowler in bowlers_so_far.items():
                     # last ball the bowler has bowled
-                    other_bowler_stats = [b for b in self.initial_match_state if b['bowler'] == bowler.name][-1]
+                    other_bowler_stats = [b for b in self.initial_match_state if b['bowler'] == name][-1]
                     # instantiate a new bowler class with the current stats
                     bowler.insert_initial_stats(other_bowler_stats)
                 # and it's the first innings, then I'm bowling
@@ -90,7 +92,7 @@ class SimpleHistoricTeam:
                     self.bat_bwl = 'bowl'
                     self.bwl_total = latest_ball['innings_runs_b4b']
                     self.bwl_wkts = latest_ball['wickets_in_innings_b4b']
-                    self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
+                    self.bowler = self.bowlers[latest_ball['bowler']] #bowler instance
                     self.onstrike = self.batting_order[1]
                     self.onstrike.current_match_stats['batting_position_bat'] = 1
                     self.offstrike = self.batting_order[2]
@@ -105,7 +107,7 @@ class SimpleHistoricTeam:
                     self.bat_bwl = 'bowl'
                     self.bwl_total = latest_ball['innings_runs_b4b']
                     self.bwl_wkts = latest_ball['wickets_in_innings_b4b']
-                    self.bowler = [b for b in self.bowlers if b.name == latest_ball['bowler']][0]
+                    self.bowler = self.bowlers[latest_ball['bowler']]
                     self.onstrike = self.batting_order[1]
                     self.onstrike.current_match_stats['batting_position_bat'] = 1
                     self.offstrike = self.batting_order[2]
