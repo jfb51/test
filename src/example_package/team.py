@@ -78,12 +78,13 @@ class SimpleHistoricTeam:
             # if I'm the bowling team
             else:
                 # names
-                for bowler in self.bowlers:
-                    #last ball the bowler has bowled
+                bowler_names_so_far = set([b['bowler'] for b in self.initial_match_state])
+                bowlers_so_far = [b for b in self.bowlers if b.name in bowler_names_so_far]
+                for bowler in bowlers_so_far:
+                    # last ball the bowler has bowled
                     other_bowler_stats = [b for b in self.initial_match_state if b['bowler'] == bowler.name][-1]
-                    if len(other_bowler_stats) > 0:
-                        # instantiate a new bowler class with the current stats
-                        bowler.current_match_stats = other_bowler_stats
+                    # instantiate a new bowler class with the current stats
+                    bowler = Bowler(bowler.name, bowler.pp, bowler.historic_career_stats, other_bowler_stats)
                 # and it's the first innings, then I'm bowling
                 if self.initial_match_state['innings'] == 1:
                     self.bat_total = 0
