@@ -65,8 +65,8 @@ class HistoricMatchSimulator:
             self.live_match_state['innings_runs_b4b'] = latest_ball['innings_runs_b4b']
             self.live_match_state['over_runs_b4b'] = latest_ball['over_runs_b4b']
             self.live_match_state['required_run_rate'] = latest_ball['required_run_rate']
-            self.over = latest_ball['over']
-            self.ball = latest_ball['legal_balls_in_innings_b4b'] % 6
+            self.over = int(latest_ball['over'])
+            self.ball = int(latest_ball['legal_balls_in_innings_b4b'] % 6)
             self.batting_team = SimpleHistoricTeam(latest_ball['batting_team'],
                                                    self.match_row, self.career_bowling_data, self.career_batting_data,
                                                    initial_match_state, simulated_target)
@@ -372,8 +372,8 @@ class HistoricMatchSimulator:
         # NB this simple at the moment, we don't change in response to the progression of the innings yet, we just
         # assume the captain decides on all bowlers at start of innings and sticks with this plan.
         max_possible_overs = 4
-        bowled_over_cols = ['bowled_over_{}_bowl'.format(i) for i in range(1, 21)]
-        overs_bowled_cols = ['overs_bowled_after_{}_bowl'.format(i) for i in range(1, 21)]
+        # bowled_over_cols = ['bowled_over_{}_bowl'.format(i) for i in range(1, 21)]
+        # overs_bowled_cols = ['overs_bowled_after_{}_bowl'.format(i) for i in range(1, 21)]
         bowled_prev_match_cols = ['bowled_over_{}_prev_match_bowl'.format(i) for i in range(1, 21)]
 
         potential_bowlers = [n.name for n in self.bowling_team.bowlers]
@@ -388,8 +388,8 @@ class HistoricMatchSimulator:
         if (self.over == 1) & (self.ball == 0):
             counter = 0
         else:
-            outcome = [b for b in bowler_careers.keys() if bowler_careers[b]['bowled_over_{}_bowl'.format(self.over)] == 1][
-                0]
+            outcome = [b for b in bowler_careers.keys() if
+                       bowler_careers[b]['bowled_over_{}_bowl'.format(self.over)] == 1][0]
             counter = self.over
             bowler_careers = {k: v for k, v in bowler_careers.items() if
                               bowler_careers[k]['overs_bowled_after_{}_bowl'.format(self.over)] < max_possible_overs}
