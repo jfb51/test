@@ -395,9 +395,9 @@ class HistoricMatchSimulator:
             outcome = [b for b, v in potential_bowlers.items() if
                        v.historic_career_stats['bowled_over_{}_bowl'.format(self.over)] == 1][0]
             counter = self.over
+            bowling_plan = [potential_bowlers[outcome]]
             potential_bowlers = {k: v for k, v in potential_bowlers.items() if
                                  potential_bowlers[k].historic_career_stats['overs_bowled_after_{}_bowl'.format(self.over)] < max_possible_overs}
-            bowling_plan = [potential_bowlers[outcome]]
 
         for i in range(counter + 1, 21):
             model = self.bowling_models['bowling_model_{}'.format(i)]
