@@ -1,6 +1,7 @@
 import numpy as np
 from example_package.player import Batter, Bowler
 
+
 class SimpleHistoricTeam:
     def __init__(self, name, match_row, career_bowling_data, career_batting_data, initial_match_state=None,
                  simulated_target=None):
@@ -15,12 +16,12 @@ class SimpleHistoricTeam:
             self.batters = {name: Batter(pp, career_batting_data) for name, pp
                             in self.match_row['setting_players'].items()}
             self.bowlers = {name: Bowler(pp, career_bowling_data) for name, pp
-                            in self.match_row['setting_bowlers'].items()}
+                            in self.match_row['setting_players'].items()}
         else:
             self.batters = {name: Batter(pp, career_batting_data) for name, pp
                             in self.match_row['chasing_players'].items()}
             self.bowlers = {name: Bowler(pp, career_bowling_data) for name, pp
-                            in self.match_row['chasing_bowlers'].items()}
+                            in self.match_row['chasing_players'].items()}
 
         self.batting_order = {i + 1: x for i, x in enumerate(self.batters.values())}  # batting order
 
