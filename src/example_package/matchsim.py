@@ -68,6 +68,9 @@ class HistoricMatchSimulator:
             self.innings = latest_ball['innings']
             self.live_match_state['innings_runs_b4b'] = latest_ball['innings_runs_b4b']
             self.live_match_state['over_runs_b4b'] = latest_ball['over_runs_b4b']
+            self.live_match_state['wickets_in_innings_b4b'] = latest_ball['wickets_in_innings_b4b']
+            self.live_match_state['legal_balls_in_innings_b4b'] = latest_ball['legal_balls_in_innings_b4b']
+            self.live_match_state['legal_balls_remaining'] = 120-self.live_match_state['legal_balls_in_innings_b4b']
             self.initial_over = int(latest_ball['over'])
             self.over = int(latest_ball['over'])
             self.ball = int(latest_ball['legal_balls_in_innings_b4b'] % 6)
