@@ -114,9 +114,9 @@ class SimpleHistoricTeam:
                 self.offstrike.current_match_stats['batting_position_bat'] = 2
 
     def zero_all_stats(self):
-        for b in self.bowlers:
+        for b in self.bowlers.values():
             b.zero_stats()
-        for b in self.batters:
+        for b in self.batters.values():
             b.zero_stats()
 
     def wicket(self):
