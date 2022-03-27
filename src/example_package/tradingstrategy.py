@@ -23,6 +23,8 @@ class TradingStrategy:
         self.betting_reference_team = self.bd.team_map[self.bd.first_team_id]
         if self.betting_reference_team != self.match.chasing_team:
             self.negate_sim_probabilities = True
+        else:
+            self.negate_sim_probabilities = False
 
     def simulate_historic_match(self):
         # these probabilities are in terms of the chasing team - need to make this consistent with the odds information
