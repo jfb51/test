@@ -476,6 +476,11 @@ class HistoricMatchSimulator:
 
     def precalc_win_probs_for_score_array(self, n, smooth=True, verbose=False):
         self.innings = 2
+        temp = self.batting_team
+        self.batting_team = self.bowling_team
+        self.bowling_team = temp
+        self.batting_team.bat_bwl = 'bat'
+        self.bowling_team.bat_bwl = 'bwl'
         j = 0
         winner = []
         scores = np.arange(40, 240)
@@ -523,7 +528,7 @@ class HistoricMatchSimulator:
             while j < n:
                 x = self.sim_match('innings', balls_so_far)
                 j += 1
-                scores.append(max(min(x[1], 239), 40))
+                scores.append(max(min(x[1], 280), 40))
             simulated_first_innings_scores[ball['ball']] = scores
             j = 0
             scores = []
