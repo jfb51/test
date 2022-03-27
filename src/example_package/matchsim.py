@@ -69,14 +69,6 @@ class HistoricMatchSimulator:
             self.initial_over = int(latest_ball['over'])
             self.over = int(latest_ball['over'])
             self.ball = int(latest_ball['legal_balls_in_innings_b4b'] % 6)
-            if self.innings == 2:
-                temp = self.batting_team
-                self.batting_team = self.bowling_team
-                self.bowling_team = temp
-                self.batting_team.bat_bwl = 'bat'
-                self.bowling_team.bat_bwl = 'bwl'
-                print(self.batting_team.name)
-                print(self.bowling_team.name)
             self.batting_team.populate_with_initial_state(initial_match_state)
             # what's the first innings total in this case?
             self.bowling_team.populate_with_initial_state(initial_match_state)
@@ -101,8 +93,6 @@ class HistoricMatchSimulator:
             else:
                 self.change_inns()
 
-        print(self.batting_team.name)
-        print(self.bowling_team.name)
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
             self.sim_over()
@@ -455,6 +445,11 @@ class HistoricMatchSimulator:
     def historic_second_innings_sim(self, n, verbose=False):
         self.innings = 2
         second_innings_data = self.historic_match_data[lambda x: x.innings == self.innings].to_dict(orient='records')
+        temp = self.batting_team
+        self.batting_team = self.bowling_team
+        self.bowling_team = temp
+        self.batting_team.bat_bwl = 'bat'
+        self.bowling_team.bat_bwl = 'bwl'
         j = 0
         winner = []
         second_innings_win_pct = OrderedDict()
