@@ -449,14 +449,15 @@ class HistoricMatchSimulator:
     # for an historic match, during the second innings, what is p(win|state of the game) for each ball in the innings?
     # note we cannot SavGol smooth these probabilities since this would use future information.
 
-    def historic_second_innings_sim(self, n, verbose=False):
+    def historic_second_innings_sim(self, n, verbose=False, switch_teams=False):
         self.innings = 2
         second_innings_data = self.historic_match_data[lambda x: x.innings == self.innings].to_dict(orient='records')
-        temp = self.batting_team
-        self.batting_team = self.bowling_team
-        self.bowling_team = temp
-        self.batting_team.bat_bwl = 'bat'
-        self.bowling_team.bat_bwl = 'bwl'
+        if switch_teams:
+            temp = self.batting_team
+            self.batting_team = self.bowling_team
+            self.bowling_team = temp
+            self.batting_team.bat_bwl = 'bat'
+            self.bowling_team.bat_bwl = 'bwl'
         j = 0
         winner = []
         second_innings_win_pct = OrderedDict()
