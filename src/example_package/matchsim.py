@@ -493,11 +493,12 @@ class HistoricMatchSimulator:
                 j += 1
             c = Counter(winner)
             if verbose:
-                print('Chasing win % from ball {} is {}'.format(j, c[ball['batting_team']] / (
-                        c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])))
+                print('Chasing win % from ball {} is {}'.format(j, c[ball[0]['batting_team']] / (
+                        c[ball[0]['bowling_team']] + c[ball[0]['batting_team']] + c['Tie'])))
             j = 0
             winner = []
-            sample_proportion = c[ball['batting_team']] / (c[ball['bowling_team']] + c[ball['batting_team']] + c['Tie'])
+            sample_proportion = c[ball[0]['batting_team']] / (c[ball[0]['bowling_team']] +
+                                                              c[ball[0]['batting_team']] + c['Tie'])
             sample_std_dev = np.sqrt(sample_proportion * (1 - sample_proportion) / n)
             score_to_prob_map[score] = (sample_proportion, sample_std_dev)
         if smooth:
