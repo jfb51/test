@@ -483,7 +483,7 @@ class HistoricMatchSimulator:
         self.bowling_team.bat_bwl = 'bwl'
         j = 0
         winner = []
-        scores = np.arange(40, 240)
+        scores = np.arange(40, 280)
         ball = self.historic_match_data[lambda x: x.innings == self.innings].to_dict(orient='records')[0]
         score_to_prob_map = OrderedDict()
         for score in scores:
