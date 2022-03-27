@@ -75,6 +75,8 @@ class HistoricMatchSimulator:
                 self.bowling_team = temp
                 self.batting_team.bat_bwl = 'bat'
                 self.bowling_team.bat_bwl = 'bwl'
+                print(self.batting_team.name)
+                print(self.bowling_team.name)
             self.batting_team.populate_with_initial_state(initial_match_state)
             # what's the first innings total in this case?
             self.bowling_team.populate_with_initial_state(initial_match_state)
@@ -99,6 +101,8 @@ class HistoricMatchSimulator:
             else:
                 self.change_inns()
 
+        print(self.batting_team.name)
+        print(self.bowling_team.name)
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
             self.sim_over()
