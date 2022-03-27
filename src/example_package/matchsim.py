@@ -69,13 +69,9 @@ class HistoricMatchSimulator:
             self.initial_over = int(latest_ball['over'])
             self.over = int(latest_ball['over'])
             self.ball = int(latest_ball['legal_balls_in_innings_b4b'] % 6)
-            self.batting_team = SimpleHistoricTeam(latest_ball['batting_team'],
-                                                   self.match_row, self.career_bowling_data, self.career_batting_data,
-                                                   initial_match_state, simulated_target)
+            self.batting_team.populate_with_initial_state(initial_match_state)
             # what's the first innings total in this case?
-            self.bowling_team = SimpleHistoricTeam(latest_ball['bowling_team'],
-                                                   self.match_row, self.career_bowling_data, self.career_batting_data,
-                                                   initial_match_state, simulated_target)
+            self.bowling_team.populate_with_initial_state(initial_match_state)
 
             if self.innings == 1:
                 self.setting_team = self.batting_team.name
