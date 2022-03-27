@@ -484,7 +484,7 @@ class HistoricMatchSimulator:
         j = 0
         winner = []
         scores = np.arange(40, 280)
-        ball = self.historic_match_data[lambda x: x.innings == self.innings].to_dict(orient='records')[0]
+        ball = [self.historic_match_data[lambda x: x.innings == self.innings].to_dict(orient='records')[0]] #sorry
         score_to_prob_map = OrderedDict()
         for score in scores:
             while j < n:
