@@ -61,17 +61,19 @@ class HistoricMatchSimulator:
         # initial match state is now a list of 'balls' i.e. rows from dataframe, comprising history of match until now.
         if initial_match_state:
             latest_ball = initial_match_state[-1]
-            self.live_match_state['runs_required'] = latest_ball['runs_required']
+            if simulated_target is None:
+                self.live_match_state['runs_required'] = latest_ball['runs_required']
+            else:
+                self.live_match_state['runs_required'] = simulated_target
             self.innings = latest_ball['innings']
             self.live_match_state['innings_runs_b4b'] = latest_ball['innings_runs_b4b']
             self.live_match_state['over_runs_b4b'] = latest_ball['over_runs_b4b']
-            self.live_match_state['required_run_rate'] = latest_ball['required_run_rate']
             self.initial_over = int(latest_ball['over'])
             self.over = int(latest_ball['over'])
             self.ball = int(latest_ball['legal_balls_in_innings_b4b'] % 6)
-            self.batting_team.populate_with_initial_state(initial_match_state)
+            self.batting_team.populate_with_initial_state(initial_match_state, simulated_target)
             # what's the first innings total in this case?
-            self.bowling_team.populate_with_initial_state(initial_match_state)
+            self.bowling_team.populate_with_initial_state(initial_match_state, simulated_target)
 
             if self.innings == 1:
                 self.setting_team = self.batting_team.name

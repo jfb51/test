@@ -3,13 +3,11 @@ from example_package.player import Batter, Bowler
 
 
 class SimpleHistoricTeam:
-    def __init__(self, name, match_row, career_bowling_data, career_batting_data,
-                 simulated_target=None):
+    def __init__(self, name, match_row, career_bowling_data, career_batting_data):
         self.match_row = match_row
         self.name = name  # team name
         self.career_bowling_data = career_bowling_data
         self.career_batting_data = career_batting_data
-        self.simulated_target = simulated_target
 
         if self.name == self.match_row['setting_team']:
             self.batters = {name: Batter(pp, career_batting_data) for name, pp
@@ -39,7 +37,8 @@ class SimpleHistoricTeam:
         self.offstrike.current_match_stats['batting_position_bat'] = 2
         self.bat_bwl = ''
 
-    def populate_with_initial_state(self, initial_match_state):
+    def populate_with_initial_state(self, initial_match_state, simulated_target=None):
+        self.simulated_target = simulated_target
         self.initial_match_state = initial_match_state
         latest_ball = self.initial_match_state[-1]
         # if I'm the batting team
