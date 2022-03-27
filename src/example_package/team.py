@@ -113,6 +113,12 @@ class SimpleHistoricTeam:
                 self.offstrike = self.batting_order[2]
                 self.offstrike.current_match_stats['batting_position_bat'] = 2
 
+    def zero_all_stats(self):
+        for b in self.bowlers:
+            b.zero_stats()
+        for b in self.batters:
+            b.zero_stats()
+
     def wicket(self):
         # module for updating the team after a wicket
         self.bat_wkts += 1

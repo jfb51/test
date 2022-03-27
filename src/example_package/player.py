@@ -10,6 +10,8 @@ class Bowler:
     def insert_initial_stats(self, current_match_stats):
         self.current_match_stats = {attr: current_match_stats[attr] for attr in self.bowler_in_game_attributes}
 
+    def zero_stats(self):
+        self.current_match_stats = {c: 0 for c in self.bowler_in_game_attributes}
 
 class Batter:
     def __init__(self, pp, historic_career_stats):
@@ -23,3 +25,5 @@ class Batter:
     def insert_initial_stats(self, current_match_stats):
         self.current_match_stats = {attr: current_match_stats[attr] for attr in self.batter_in_game_attributes}
 
+    def zero_stats(self):
+        self.current_match_stats = {c: 0 for c in self.batter_in_game_attributes}
