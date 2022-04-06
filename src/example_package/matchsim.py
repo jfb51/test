@@ -102,9 +102,7 @@ class HistoricMatchSimulator:
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
-            print(self.over, self.ball, 'at entry of sim over')
             self.sim_over()
-            print(self.over, self.ball, 'at exit of sim over')
 
         if self.batting_team.bat_total > self.bowling_team.bat_total:
             self.winner = self.batting_team.name
@@ -147,8 +145,9 @@ class HistoricMatchSimulator:
         while (self.ball < 6) and (self.batting_team.bat_wkts < 10) and \
                 ((self.innings == 1) or (self.batting_team.bat_total <= self.bowling_team.bat_total)):
             self.sim_ball()
+            if self.over == 21:
+                print(self.over, self.ball, self.innings, self.live_match_state)
 
-        print(self.over, self.ball, 'at exit of sim_ball')
         self.ball = 0
         self.live_match_state['over_runs_b4b'] = 0
         self.batting_team.new_over()
@@ -191,13 +190,8 @@ class HistoricMatchSimulator:
             self.live_match_state['run_rate_b4b'] = 0
 
         if self.innings == 2:
-            try:
-                self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
-                                                                      self.live_match_state['legal_balls_remaining'])
-            except ZeroDivisionError:
-                print(self.live_match_state, self.over, self.ball)
-                self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
-                                                                      self.live_match_state['legal_balls_remaining'])
+            self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
+                                                                  self.live_match_state['legal_balls_remaining'])
 
         self.regressors = self.live_match_state.copy()
         self.regressors.update(self.bowling_team.bowler.historic_career_stats)
