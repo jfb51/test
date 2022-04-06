@@ -102,8 +102,9 @@ class HistoricMatchSimulator:
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
-            print(self.over, self.ball)
+            print(self.over, self.ball, 'at entry of sim over')
             self.sim_over()
+            print(self.over, self.ball, 'at exit of sim over')
 
         if self.batting_team.bat_total > self.bowling_team.bat_total:
             self.winner = self.batting_team.name
@@ -147,6 +148,7 @@ class HistoricMatchSimulator:
                 ((self.innings == 1) or (self.batting_team.bat_total <= self.bowling_team.bat_total)):
             self.sim_ball()
 
+        print(self.over, self.ball, 'at exit of sim_ball')
         self.ball = 0
         self.live_match_state['over_runs_b4b'] = 0
         self.batting_team.new_over()
