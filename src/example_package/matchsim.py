@@ -145,8 +145,6 @@ class HistoricMatchSimulator:
         while (self.ball < 6) and (self.batting_team.bat_wkts < 10) and \
                 ((self.innings == 1) or (self.batting_team.bat_total <= self.bowling_team.bat_total)):
             self.sim_ball()
-            if self.over == 21:
-                print(self.over, self.ball, self.innings, self.live_match_state)
 
         self.ball = 0
         self.live_match_state['over_runs_b4b'] = 0
