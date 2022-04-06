@@ -140,6 +140,7 @@ class HistoricMatchSimulator:
         self.live_match_state['is_death_overs'] = self.over > 16
         self.live_match_state['is_powerplay'] = self.over < 6
         # need to tweak for BBL in 2020, 21 (19?)
+        print(self.over, self.initial_over, len(self.bowling_plan))
         self.bowling_team.bowler = self.bowling_plan[self.over - self.initial_over]
 
         while (self.ball < 6) and (self.batting_team.bat_wkts < 10) and \
@@ -188,6 +189,7 @@ class HistoricMatchSimulator:
             self.live_match_state['run_rate_b4b'] = 0
 
         if self.innings == 2:
+            print(self.live_match_state['runs_required'], self.over, self.ball, self.live_match_state['legal_balls_remaining'])
             self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
                                                                   self.live_match_state['legal_balls_remaining'])
 
