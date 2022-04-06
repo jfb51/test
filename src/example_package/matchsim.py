@@ -192,7 +192,7 @@ class HistoricMatchSimulator:
                 self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
                                                                       self.live_match_state['legal_balls_remaining'])
             except ZeroDivisionError:
-                print(self.live_match_state)
+                print(self.live_match_state, self.over, self.ball)
                 self.live_match_state['required_run_rate'] = 6 * (self.live_match_state['runs_required'] /
                                                                       self.live_match_state['legal_balls_remaining'])
 
