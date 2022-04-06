@@ -102,6 +102,7 @@ class HistoricMatchSimulator:
 
         while (self.over <= 20) and (self.batting_team.bat_wkts < 10) and (self.batting_team.bat_total
                                                                            <= self.bowling_team.bat_total):
+            print(self.over, self.ball)
             self.sim_over()
 
         if self.batting_team.bat_total > self.bowling_team.bat_total:
