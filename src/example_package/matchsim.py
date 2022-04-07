@@ -56,7 +56,7 @@ class HistoricMatchSimulator:
         self.comm = []
         self.winner = ''
 
-    def sim_match(self, match_or_innings, initial_match_state=None, simulated_target=None):
+    def sim_match(self, match_or_innings, initial_match_state=None, simulated_target=None, verbose=False):
 
         # initial match state is now a list of 'balls' i.e. rows from dataframe, comprising history of match until now.
         if initial_match_state:
@@ -96,7 +96,10 @@ class HistoricMatchSimulator:
             while (self.over <= 20) and (self.batting_team.bat_wkts < 10):
                 self.sim_over()
             if match_or_innings == 'innings':
-                return [self.batting_team.name, self.batting_team.bat_total, self.batting_team.bat_wkts]
+                if verbose:
+                    return self.batting_team.name, self.batting_team.bat_total, self.batting_team.bat_wkts
+                else:
+                    return self.batting_team.bat_total
             else:
                 self.change_inns()
 
@@ -110,13 +113,17 @@ class HistoricMatchSimulator:
             self.winner = self.bowling_team.name
         else:
             self.winner = 'Tie'
-        return [self.winner,
-                [self.bowling_team.name, self.bowling_team.bat_total, self.bowling_team.bat_wkts],
-                # self.t_bwl.ply_stats],
-                [self.batting_team.name, self.batting_team.bat_total, self.batting_team.bat_wkts],
-                # self.t_bat.ply_stats]
-                [self.over, self.ball]
-                ]
+
+        if verbose:
+            return [self.winner,
+                    [self.bowling_team.name, self.bowling_team.bat_total, self.bowling_team.bat_wkts],
+                    # self.t_bwl.ply_stats],
+                    [self.batting_team.name, self.batting_team.bat_total, self.batting_team.bat_wkts],
+                    # self.t_bat.ply_stats]
+                    [self.over, self.ball]
+                    ]
+        else:
+            return self.winner
 
     def sim_over(self):
         # module to simulate an over
