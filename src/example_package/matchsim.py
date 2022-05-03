@@ -77,7 +77,6 @@ class HistoricMatchSimulator:
             self.batting_team.zero_all_stats()
             self.bowling_team.zero_all_stats()
             self.batting_team.populate_with_initial_state(initial_match_state, simulated_target)
-            # what's the first innings total in this case?
             self.bowling_team.populate_with_initial_state(initial_match_state, simulated_target)
 
             if self.innings == 1:
@@ -171,6 +170,18 @@ class HistoricMatchSimulator:
         self.live_match_state['legal_balls_remaining'] = 120 - self.live_match_state['legal_balls_in_innings_b4b']
         self.live_match_state['is_first_ball'] = int(self.ball == 0)
         self.live_match_state['is_last_ball'] = int(self.ball == 5)
+
+        in_game_props = {}
+        for i in [0, 1, 2, 4, 6]:
+            in_game_props['bowler_prop_{}'.format(i)] = \
+                self.bowling_team.bowler.current_match_stats['striker_{}_b4b'.format(i)] / \
+                self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
+            in_game_props['striker_prop_{}'.format(i)] = \
+                self.batting_team.onstrike.current_match_stats['striker_{}_b4b'.format(i)] / \
+                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
+            in_game_props['bowler_prop_{}'.format(i)] = min(max(in_game_props['bowler_prop_{}'.format(i)], 0), 1)
+            in_game_props['striker_prop_{}'.format(i)] = min(max(in_game_props['striker_prop_{}'.format(i)], 0), 1)
+
         self.live_match_state['dots_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_dots_bowl'] + \
                                                 self.batting_team.onstrike.historic_career_stats['prop_dots_bat']
         self.live_match_state['ones_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_ones_bowl'] + \
@@ -181,6 +192,16 @@ class HistoricMatchSimulator:
                                                 self.batting_team.onstrike.historic_career_stats['prop_fours_bat']
         self.live_match_state['sixes_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_sixes_bowl'] + \
                                                 self.batting_team.onstrike.historic_career_stats['prop_sixes_bat']
+        self.live_match_state['dots_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_0'] + \
+                                                self.batting_team.onstrike.historic_career_stats['striker_prop_0']
+        self.live_match_state['ones_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_1'] + \
+                                                self.batting_team.onstrike.historic_career_stats['striker_prop_1']
+        self.live_match_state['twos_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_2'] + \
+                                                self.batting_team.onstrike.historic_career_stats['striker_prop_2']
+        self.live_match_state['fours_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_4'] + \
+                                                self.batting_team.onstrike.historic_career_stats['striker_prop_4']
+        self.live_match_state['sixes_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_6'] + \
+                                                self.batting_team.onstrike.historic_career_stats['striker_prop_6']
 
         if self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] > 0:
             self.bowling_team.bowler.current_match_stats['bowler_er_b4b'] = \
@@ -206,11 +227,6 @@ class HistoricMatchSimulator:
 
         outcomes = ['0', '1', '2', '3', '4', '6', 'w', 'nb', 'W']
 
-        # inn = [self.innings == 2]
-        # if self.innings == 1:
-        #     inn1_score = 0
-        # else:
-        #     inn1_score = self.bowling_team.bat_total
         # select relevant models - at this point I need to have gathered all the state.
         # the model that we pick is unlikely to change by ball, so can move out of critical loop.
 
@@ -242,6 +258,8 @@ class HistoricMatchSimulator:
             self.ball += 1
             self.bowling_team.bowler.current_match_stats['bowler_dots_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_0_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['striker_0_b4b'] += 1
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
                 100 * self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] /\
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
@@ -254,6 +272,8 @@ class HistoricMatchSimulator:
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_1_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['striker_1_b4b'] += 1
             self.live_match_state['over_runs_b4b'] += 1
             self.live_match_state['innings_runs_b4b'] += 1
             self.batting_team.bat_total += 1
@@ -272,6 +292,8 @@ class HistoricMatchSimulator:
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 2
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_2_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['striker_2_b4b'] += 1
             self.live_match_state['over_runs_b4b'] += 2
             self.live_match_state['innings_runs_b4b'] += 2
             self.batting_team.bat_total += 2
@@ -307,6 +329,8 @@ class HistoricMatchSimulator:
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 4
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_4_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['striker_4_b4b'] += 1
             self.live_match_state['over_runs_b4b'] += 4
             self.live_match_state['innings_runs_b4b'] += 4
             self.batting_team.bat_total += 4
@@ -324,6 +348,8 @@ class HistoricMatchSimulator:
                 self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
             self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] += 6
             self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] += 1
+            self.bowling_team.bowler.current_match_stats['bowler_6_b4b'] += 1
+            self.batting_team.onstrike.current_match_stats['striker_6_b4b'] += 1
             self.live_match_state['over_runs_b4b'] += 6
             self.live_match_state['innings_runs_b4b'] += 6
             self.batting_team.bat_total += 6
