@@ -177,11 +177,21 @@ class HistoricMatchSimulator:
                 in_game_props['bowler_prop_{}'.format(i)] = \
                     self.bowling_team.bowler.current_match_stats['bowler_{}_b4b'.format(i)] / \
                     self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
+        else:
+            for i in [0, 1, 2, 4, 6]:
+                in_game_props['bowler_prop_{}'.format(i)] = 0
+
+        if self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b'] > 0:
+            for i in [0, 1, 2, 4, 6]:
                 in_game_props['striker_prop_{}'.format(i)] = \
                     self.batting_team.onstrike.current_match_stats['striker_{}_b4b'.format(i)] / \
                     self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
-                in_game_props['bowler_prop_{}'.format(i)] = min(max(in_game_props['bowler_prop_{}'.format(i)], 0), 1)
-                in_game_props['striker_prop_{}'.format(i)] = min(max(in_game_props['striker_prop_{}'.format(i)], 0), 1)
+        else:
+            for i in [0, 1, 2, 4, 6]:
+                in_game_props['striker_prop_{}'.format(i)] = 0
+
+        in_game_props['bowler_prop_{}'.format(i)] = min(max(in_game_props['bowler_prop_{}'.format(i)], 0), 1)
+        in_game_props['striker_prop_{}'.format(i)] = min(max(in_game_props['striker_prop_{}'.format(i)], 0), 1)
 
         self.live_match_state['dots_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_dots_bowl'] + \
                                                 self.batting_team.onstrike.historic_career_stats['prop_dots_bat']
