@@ -174,7 +174,7 @@ class HistoricMatchSimulator:
         in_game_props = {}
         for i in [0, 1, 2, 4, 6]:
             in_game_props['bowler_prop_{}'.format(i)] = \
-                self.bowling_team.bowler.current_match_stats['striker_{}_b4b'.format(i)] / \
+                self.bowling_team.bowler.current_match_stats['bowler_{}_b4b'.format(i)] / \
                 self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
             in_game_props['striker_prop_{}'.format(i)] = \
                 self.batting_team.onstrike.current_match_stats['striker_{}_b4b'.format(i)] / \
