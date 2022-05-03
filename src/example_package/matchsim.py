@@ -246,7 +246,7 @@ class HistoricMatchSimulator:
 
         p_runs = calculate_mnlogit_model_probabilities(self.regressors, self.runs_model)
 
-        if len(p_runs) < 5:
+        if len(p_runs) < 6:
             print('hit model without full range of run outcomes')
             p_runs = 0.995 * p_runs # should sum to p 0.995
             p_runs.insert(3, 0.005) # now 1
