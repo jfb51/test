@@ -94,11 +94,9 @@ def calculate_mnlogit_model_probabilities(reg, model):
     for k, v in relevant_params.items():
         exp_sum.append(2.71828**(sum(v[param] * state[param] for param in v.keys())))
     p_dot = 1 / (1 + sum(exp_sum))
-    p_one = p_dot * exp_sum[0]
-    p_two = p_dot * exp_sum[1]
-    p_three = p_dot * exp_sum[2]
-    p_four = p_dot * exp_sum[3]
-    p_six = p_dot * exp_sum[4]
+    other_run_p = [p_dot]
+    for i in range(len(exp_sum)):
+        other_run_p.append(p_dot * exp_sum[i])
 
-    return [p_dot, p_one, p_two, p_three, p_four, p_six]
+    return other_run_p
 
