@@ -172,15 +172,16 @@ class HistoricMatchSimulator:
         self.live_match_state['is_last_ball'] = int(self.ball == 5)
 
         in_game_props = {}
-        for i in [0, 1, 2, 4, 6]:
-            in_game_props['bowler_prop_{}'.format(i)] = \
-                self.bowling_team.bowler.current_match_stats['bowler_{}_b4b'.format(i)] / \
-                self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
-            in_game_props['striker_prop_{}'.format(i)] = \
-                self.batting_team.onstrike.current_match_stats['striker_{}_b4b'.format(i)] / \
-                self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
-            in_game_props['bowler_prop_{}'.format(i)] = min(max(in_game_props['bowler_prop_{}'.format(i)], 0), 1)
-            in_game_props['striker_prop_{}'.format(i)] = min(max(in_game_props['striker_prop_{}'.format(i)], 0), 1)
+        if self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] > 0:
+            for i in [0, 1, 2, 4, 6]:
+                in_game_props['bowler_prop_{}'.format(i)] = \
+                    self.bowling_team.bowler.current_match_stats['bowler_{}_b4b'.format(i)] / \
+                    self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
+                in_game_props['striker_prop_{}'.format(i)] = \
+                    self.batting_team.onstrike.current_match_stats['striker_{}_b4b'.format(i)] / \
+                    self.batting_team.onstrike.current_match_stats['striker_balls_faced_b4b']
+                in_game_props['bowler_prop_{}'.format(i)] = min(max(in_game_props['bowler_prop_{}'.format(i)], 0), 1)
+                in_game_props['striker_prop_{}'.format(i)] = min(max(in_game_props['striker_prop_{}'.format(i)], 0), 1)
 
         self.live_match_state['dots_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_dots_bowl'] + \
                                                 self.batting_team.onstrike.historic_career_stats['prop_dots_bat']
@@ -192,16 +193,12 @@ class HistoricMatchSimulator:
                                                 self.batting_team.onstrike.historic_career_stats['prop_fours_bat']
         self.live_match_state['sixes_matchup'] = self.bowling_team.bowler.historic_career_stats['prop_sixes_bowl'] + \
                                                 self.batting_team.onstrike.historic_career_stats['prop_sixes_bat']
-        self.live_match_state['dots_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_0'] + \
-                                                self.batting_team.onstrike.historic_career_stats['striker_prop_0']
-        self.live_match_state['ones_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_1'] + \
-                                                self.batting_team.onstrike.historic_career_stats['striker_prop_1']
-        self.live_match_state['twos_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_2'] + \
-                                                self.batting_team.onstrike.historic_career_stats['striker_prop_2']
-        self.live_match_state['fours_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_4'] + \
-                                                self.batting_team.onstrike.historic_career_stats['striker_prop_4']
-        self.live_match_state['sixes_in_game_matchup'] = self.bowling_team.bowler.current_match_stats['bowler_prop_6'] + \
-                                                self.batting_team.onstrike.historic_career_stats['striker_prop_6']
+
+        self.live_match_state['dots_in_game_matchup'] = in_game_props['bowler_prop_0'] + in_game_props['striker_prop_0']
+        self.live_match_state['ones_in_game_matchup'] = in_game_props['bowler_prop_1'] + in_game_props['striker_prop_1']
+        self.live_match_state['twos_in_game_matchup'] = in_game_props['bowler_prop_2'] + in_game_props['striker_prop_2']
+        self.live_match_state['fours_in_game_matchup'] = in_game_props['bowler_prop_4'] + in_game_props['striker_prop_4']
+        self.live_match_state['sixes_in_game_matchup'] = in_game_props['bowler_prop_6'] + in_game_props['striker_prop_6']
 
         if self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'] > 0:
             self.bowling_team.bowler.current_match_stats['bowler_er_b4b'] = \
