@@ -144,7 +144,7 @@ class HistoricMatchSimulator:
 
         self.live_match_state['is_middle_overs'] = (self.over > 6) & (self.over < 17)
         self.live_match_state['is_death_overs'] = self.over > 16
-        self.live_match_state['is_powerplay'] = self.over < 6
+        self.live_match_state['is_powerplay'] = self.over <= 6
         # need to tweak for BBL in 2020, 21 (19?)
         self.bowling_team.bowler = self.bowling_plan[self.over - self.initial_over]
 
