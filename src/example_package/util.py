@@ -95,7 +95,7 @@ def calculate_logit_model_probability(reg, model):
     state = categorify_dict(dz)
     relevant_params = remove_useless_regression_model_params(state, model.model_params)
     exp_sum = 2.71828**(sum(state[key] * relevant_params[key] for key in state))
-    p_fail = 1 / (1 + sum(exp_sum))
+    p_fail = 1 / (1 + exp_sum)
     p_success = 1 - p_fail
 
     return p_success
