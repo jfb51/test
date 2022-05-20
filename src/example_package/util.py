@@ -77,7 +77,7 @@ def remove_useless_regression_model_params_multinomial(state, params):
 def calculate_probit_model_probability(reg, model):
     items = itemgetter(*model.model_variables)(reg)
     if len(model.model_variables) == 1:
-        items == [items]
+        items = [items]
     dz = dict(zip(model.model_variables, items))
     dz['Intercept'] = 1
     state = categorify_dict(dz)
