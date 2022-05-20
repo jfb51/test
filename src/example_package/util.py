@@ -100,7 +100,7 @@ def calculate_logit_model_probability(reg, model):
     p_fail = 1 / (1 + sum(exp_sum))
     p_success = 1 - p_fail
 
-    return [p_fail, p_success]
+    return p_success
 
 
 def calculate_mnlogit_model_probabilities(reg, model):
