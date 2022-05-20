@@ -86,6 +86,23 @@ def calculate_probit_model_probability(reg, model):
     return phi(z)
 
 
+def calculate_logit_model_probability(reg, model):
+    items = itemgetter(*model.model_variables)(reg)
+    if len(model.model_variables) == 1:
+        items = [items]
+    dz = dict(zip(model.model_variables, items))
+    dz['Intercept'] = 1
+    state = categorify_dict(dz)
+    relevant_params = remove_useless_regression_model_params(state, model.model_params)
+    exp_sum = []
+    for k, v in relevant_params.items():
+        exp_sum.append(2.71828**(sum(v[param] * state[param] for param in v.keys())))
+    p_fail = 1 / (1 + sum(exp_sum))
+    p_success = 1 - p_fail
+
+    return [p_fail, p_success]
+
+
 def calculate_mnlogit_model_probabilities(reg, model):
     items = itemgetter(*model.model_variables)(reg)
     dz = dict(zip(model.model_variables, items))
