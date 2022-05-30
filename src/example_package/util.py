@@ -2,6 +2,7 @@ import numpy as np
 from collections import namedtuple, OrderedDict
 from math import erf
 from operator import itemgetter
+import bisect
 
 def kelly_bet(row, commission=0.05, bankroll=1000):
     if row.side == "None":
@@ -117,3 +118,10 @@ def calculate_mnlogit_model_probabilities(reg, model):
 
     return other_run_p
 
+
+def find_le(a, x):
+    'Find rightmost value less than or equal to x'
+    i = bisect.bisect_right(a, x)
+    if i:
+        return a[i-1]
+    raise ValueError
