@@ -104,7 +104,7 @@ def calculate_logit_model_probability(reg, model):
 
 def calculate_mnlogit_model_probabilities(reg, model):
     if model.model_variables == ['1']:
-        pass
+        dz = dict()
     else:
         items = itemgetter(*model.model_variables)(reg)
         dz = dict(zip(model.model_variables, items))
