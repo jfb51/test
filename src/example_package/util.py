@@ -103,8 +103,11 @@ def calculate_logit_model_probability(reg, model):
 
 
 def calculate_mnlogit_model_probabilities(reg, model):
-    items = itemgetter(*model.model_variables)(reg)
-    dz = dict(zip(model.model_variables, items))
+    if model.model_variables == ['1']:
+        pass
+    else:
+        items = itemgetter(*model.model_variables)(reg)
+        dz = dict(zip(model.model_variables, items))
     dz['Intercept'] = 1
     state = categorify_dict(dz)
     relevant_params = remove_useless_regression_model_params_multinomial(state, model.model_params)
