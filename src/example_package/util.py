@@ -94,6 +94,7 @@ def calculate_logit_model_probability(reg, model):
         else:
             items = itemgetter(*model.model_variables)(reg)
             items = [items]
+            dz = dict(zip(model.model_variables, items))
     else:
         items = itemgetter(*model.model_variables)(reg)
         dz = dict(zip(model.model_variables, items))
