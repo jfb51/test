@@ -88,10 +88,15 @@ def calculate_probit_model_probability(reg, model):
 
 
 def calculate_logit_model_probability(reg, model):
-    items = itemgetter(*model.model_variables)(reg)
     if len(model.model_variables) == 1:
-        items = [items]
-    dz = dict(zip(model.model_variables, items))
+        if model.model_variables == ['1']:
+            dz = dict()
+        else:
+            items = itemgetter(*model.model_variables)(reg)
+            items = [items]
+    else:
+        items = itemgetter(*model.model_variables)(reg)
+        dz = dict(zip(model.model_variables, items))
     dz['Intercept'] = 1
     state = categorify_dict(dz)
     relevant_params = remove_useless_regression_model_params(state, model.model_params)
@@ -103,8 +108,12 @@ def calculate_logit_model_probability(reg, model):
 
 
 def calculate_mnlogit_model_probabilities(reg, model):
-    if model.model_variables == ['1']:
-        dz = dict()
+    if len(model.model_variables) == 1:
+        if model.model_variables == ['1']:
+            dz = dict()
+        else:
+            items = itemgetter(*model.model_variables)(reg)
+            items = [items]
     else:
         items = itemgetter(*model.model_variables)(reg)
         dz = dict(zip(model.model_variables, items))
