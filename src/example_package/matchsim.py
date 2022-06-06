@@ -76,8 +76,6 @@ class HistoricMatchSimulator:
             latest_ball = initial_match_state[-1]
             if simulated_target is None:
                 self.live_match_state['runs_required'] = latest_ball['runs_required']
-                self.live_match_state['target_rr'] = (latest_ball['runs_required'] + latest_ball[
-                    'innings_runs_b4b']) / 20
             else:
                 self.live_match_state['runs_required'] = simulated_target
                 self.live_match_state['target_rr'] = simulated_target / 20
