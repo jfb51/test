@@ -110,32 +110,34 @@ class HistoricMatchSimulator:
                 self.wicket_model = self.wicket_models[(
                 self.innings, find_le(self.wicket_splits_2, self.live_match_state['legal_balls_in_innings_b4b']),
                 self.live_match_state['batter_first_ball'])]
-            if self.live_match_state['legal_balls_in_innings_b4b'] < 12:
+
+            if self.live_match_state['batter_no_11']:
                 self.runs_model = self.runs_models[(self.innings,
-                                                    find_le(self.run_splits,
-                                                            self.live_match_state['legal_balls_in_innings_b4b']),
                                                     'N/A',
-                                                    'N/A',
+                                                     self.live_match_state['batter_on_0'],
+                                                     self.live_match_state['batter_no_11'],
                                                     'N/A')]
-            elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (
-                    self.live_match_state['legal_balls_in_innings_b4b'] < 108):
+            elif self.live_match_state['legal_balls_in_innings_b4b'] < 12:
                 self.runs_model = self.runs_models[(self.innings,
-                                                    find_le(self.run_splits,
-                                                            self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    'N/A',
+                                                    self.live_match_state['batter_no_11'],
+                                                    'N/A')]
+            elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
+                self.runs_model = self.runs_models[(self.innings,
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     self.live_match_state['batter_on_0'],
                                                     self.live_match_state['batter_no_11'],
                                                     self.live_match_state['senior_partner'])]
             elif self.live_match_state['legal_balls_in_innings_b4b'] >= 118:
                 self.runs_model = self.runs_models[(self.innings,
-                                                    find_le(self.run_splits,
-                                                            self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     self.live_match_state['batter_on_0'],
-                                                    'N/A',
+                                                    self.live_match_state['batter_no_11'],
                                                     'N/A')]
             else:
                 self.runs_model = self.runs_models[(self.innings,
-                                                    find_le(self.run_splits,
-                                                            self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     self.live_match_state['batter_on_0'],
                                                     self.live_match_state['batter_no_11'],
                                                     'N/A')]
@@ -229,32 +231,38 @@ class HistoricMatchSimulator:
                 self.wicket_model = self.wicket_models[(
                 2, self.live_match_state['legal_balls_in_innings_b4b'], self.live_match_state['batter_first_ball'])]
 
-        if self.live_match_state['legal_balls_in_innings_b4b'] in self.run_splits:
-            if self.live_match_state['legal_balls_in_innings_b4b'] < 12:
-                self.runs_model = self.runs_models[(self.innings,
-                                                    self.live_match_state['legal_balls_in_innings_b4b'],
+        if self.live_match_state['batter_no_11']:
+            self.runs_model = self.runs_models[(self.innings,
                                                     'N/A',
-                                                    'N/A',
+                                                     self.live_match_state['batter_on_0'],
+                                                     self.live_match_state['batter_no_11'],
                                                     'N/A')]
-            elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (
-                    self.live_match_state['legal_balls_in_innings_b4b'] < 108):
-                self.runs_model = self.runs_models[(self.innings,
-                                                    self.live_match_state['legal_balls_in_innings_b4b'],
-                                                    self.live_match_state['batter_on_0'],
-                                                    self.live_match_state['batter_no_11'],
-                                                    self.live_match_state['senior_partner'])]
-            elif self.live_match_state['legal_balls_in_innings_b4b'] >= 118:
-                self.runs_model = self.runs_models[(self.innings,
-                                                    self.live_match_state['legal_balls_in_innings_b4b'],
-                                                    self.live_match_state['batter_on_0'],
-                                                    'N/A',
-                                                    'N/A')]
-            else:
-                self.runs_model = self.runs_models[(self.innings,
-                                                    self.live_match_state['legal_balls_in_innings_b4b'],
-                                                    self.live_match_state['batter_on_0'],
-                                                    self.live_match_state['batter_no_11'],
-                                                    'N/A')]
+        else:
+            if self.live_match_state['legal_balls_in_innings_b4b'] in self.run_splits:
+                if self.live_match_state['legal_balls_in_innings_b4b'] < 12:
+                    self.runs_model = self.runs_models[(self.innings,
+                                                        self.live_match_state['legal_balls_in_innings_b4b'],
+                                                        'N/A',
+                                                        self.live_match_state['batter_no_11'],
+                                                        'N/A')]
+                elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
+                    self.runs_model = self.runs_models[(self.innings,
+                                                        self.live_match_state['legal_balls_in_innings_b4b'],
+                                                        self.live_match_state['batter_on_0'],
+                                                        self.live_match_state['batter_no_11'],
+                                                        self.live_match_state['senior_partner'])]
+                elif self.live_match_state['legal_balls_in_innings_b4b'] >= 118:
+                    self.runs_model = self.runs_models[(self.innings,
+                                                        self.live_match_state['legal_balls_in_innings_b4b'],
+                                                        self.live_match_state['batter_on_0'],
+                                                        self.live_match_state['batter_no_11'],
+                                                        'N/A')]
+                else:
+                    self.runs_model = self.runs_models[(self.innings,
+                                                        self.live_match_state['legal_balls_in_innings_b4b'],
+                                                        self.live_match_state['batter_on_0'],
+                                                        self.live_match_state['batter_no_11'],
+                                                        'N/A')]
 
         self.live_match_state['wickets_in_innings_b4b'] = int(self.batting_team.bat_wkts)
         self.live_match_state['wl_squared'] = (self.live_match_state['wickets_in_innings_b4b'] - 3) ** 2
