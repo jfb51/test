@@ -39,7 +39,7 @@ class HistoricMatchSimulator:
         self.wide_outcomes = [1, 2, 5]
         self.nb_outcomes = [1, 2]
         self.run_out_outcomes = [0, 1]
-        self.run_splits = [k[1] for k in self.runs_models.keys()]
+        self.run_splits = [k[1] for k in self.runs_models.keys() if k[1] != 'N/A']
         self.wicket_splits_1 = [k[1] for k in self.wicket_models.keys() if k[0] == 1]
         self.wicket_splits_2 = [k[1] for k in self.wicket_models.keys() if k[0] == 2]
         self.debug = debug
