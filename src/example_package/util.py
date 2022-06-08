@@ -115,6 +115,7 @@ def calculate_mnlogit_model_probabilities(reg, model):
         else:
             items = itemgetter(*model.model_variables)(reg)
             items = [items]
+            dz = dict(zip(model.model_variables, items))
     else:
         items = itemgetter(*model.model_variables)(reg)
         dz = dict(zip(model.model_variables, items))
