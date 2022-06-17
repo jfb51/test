@@ -1,6 +1,7 @@
 import msgspec
 from typing import List, Any, Optional
 
+
 class Team(msgspec.Struct):
     id: int
     name: str
