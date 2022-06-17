@@ -7,6 +7,7 @@ from nautilus_trader.common.logging import Logger
 from nautilus_trader.live.data_client import LiveDataClient
 from nautilus_trader.model.data.base import DataType
 from nautilus_trader.model.data.base import Data
+from example_package.response import LatestResponse
 import msgspec
 import requests
 from nautilus_trader.model.identifiers import ClientId
@@ -70,13 +71,12 @@ class CricinfoLiveDataClient():
             "https://hs-consumer-api.espncricinfo.com/v1/pages/match/details?lang=en&seriesId={}&matchId={}&latest=true".format(self.series_id, self.match_id))
         data = msgspec.json.decode(latest.content, type=LatestResponse)
         return data
-    
 
     def loop(self):
         self._cric_connected = True
         while self._is_running:
-            resp = get_cricinfo_data()
-            self._handle_raw_data(data=cricinfo)
+            resp = self.get_cricinfo_data()
+            self._handle_raw_data(data=resp)
             self._cric_connected = False
 
     # -- HANDLERS --------------------------------------------------------------------------------------
@@ -84,8 +84,12 @@ class CricinfoLiveDataClient():
         parsed: CricInfoEnvelope = CricInfoEnvelope(resp)
         self._handle_data(data=parsed)
 
+
 class CricInfoEnvelope(Data):
     def init(self, cric_info, ts_init: int):
         self.data = msgspec.json.encode(cric_info)
 
+
 def __main__():
+    adapter = CricinfoLiveDataClient()
+    adapter.connect()
