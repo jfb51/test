@@ -207,16 +207,23 @@ class Scorecard(msgspec.Struct):
     innings: List[Inning]
 
 
-# class Group(msgspec.Struct):
-#     team: Team
-
-# class Notes(msgspec.Struct):
-#     groups: List[Group]
-
 class LatestResponse(msgspec.Struct):
     match: Match
     matchPlayers: MatchPlayers
     livePerformance: Optional[LivePerformance]
     recentBallCommentary: Optional[RecentBallCommentary]
     scorecard: Optional[Scorecard]
-#     notes: Notes
+
+    def __eq__(self, other):
+        first = self.recentBallCommentary.ballComments[0].oversUnique == other.recentBallCommentary.ballComments[
+            0].oversUnique
+        second = self.recentBallCommentary.ballComments[0].inningNumber == other.recentBallCommentary.ballComments[
+            0].inningNumber
+        return first and second
+
+    def __ne__(self, other):
+        first = self.recentBallCommentary.ballComments[0].oversUnique != other.recentBallCommentary.ballComments[
+            0].oversUnique
+        second = self.recentBallCommentary.ballComments[0].inningNumber != other.recentBallCommentary.ballComments[
+            0].inningNumber
+        return first or second
