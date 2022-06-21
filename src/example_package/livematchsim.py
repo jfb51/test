@@ -1,14 +1,17 @@
 from liveteam import LiveTeam
 import copy
+import pandas as pd
+import cloudpickle
 from scipy.signal import savgol_filter
 from collections import OrderedDict
 import numpy as np
 import math
 from collections import Counter
-from example_package.util import calculate_probit_model_probability, calculate_mnlogit_model_probabilities, \
-    calculate_logit_model_probability, find_le
+from util import calculate_probit_model_probability, calculate_mnlogit_model_probabilities, \
+    calculate_logit_model_probability, find_le, SlimRegModel, update_career_bowling, update_career_batting
 from random import choices
-
+from cricinfodata import *
+from response import *
 
 class LiveMatchSimulator:
     def __init__(self, match_id, series_id, pre_match_state, career_bowling_data,
@@ -23,14 +26,16 @@ class LiveMatchSimulator:
         self.wide_models = wide_models
         self.nb_models = nb_models
         self.pre_match_state = pre_match_state
-        self.op_odds = self.pre_match_oddsportal_call()
+        # self.op_odds = self.pre_match_oddsportal_call()
         # in sim, we get the data for the actual match so it's easy to slice out the players...
         # but here we have to take the latest data for each player individually, which could be anywhere in the df...
         # also, this means that shifting the stuff we know is now bad because we should use the newest datapoints!
         self.career_bowling_data = career_bowling_data
         self.career_batting_data = career_batting_data
+
         self.bowling_plan = []
         self.bounds = bounds
+        self.live_match_state = {}
         self.live_match_state['event_name'] = self.pre_match_state.event_name
         self.live_match_state['venue'] = self.pre_match_state.venue
         #         self.pre_match_state['opening_probabilities'] = some_function(self.op_odds)
@@ -39,7 +44,7 @@ class LiveMatchSimulator:
         self.live_match_state['innings_runs_b4b'] = 0
         self.live_match_state['required_run_rate'] = 0
         self.live_match_state['over_runs_b4b'] = 0
-        self.career_bowling_data_dict = self.career_bowling_data.droplevel(1).to_dict(orient='index')
+        # self.career_bowling_data_dict = self.career_bowling_data.droplevel(1).to_dict(orient='index')
         self.outcomes = ['0', '1', '2', '4', '6', 'w', 'nb', 'W', '3']
         self.wide_outcomes = [1, 2, 5]
         self.nb_outcomes = [1, 2]
@@ -57,18 +62,38 @@ class LiveMatchSimulator:
         self.chasing_team = self.pre_match_state.chasing_team
         self.setting_career_batting_data = {}
         self.setting_career_bowling_data = {}
+        debut_career_batting_dict = career_batting_data.iloc[0].to_dict() #need to maintain bowling style and playing role somehow
+        debut_career_batting_dict = {k: 0 for k, v in debut_career_batting_dict.items()}
+        debut_career_bowling_dict = career_bowling_data.iloc[0].to_dict()
+        debut_career_bowling_dict = {k: 0 for k, v in debut_career_bowling_dict.items()}
         for p in self.pre_match_state.setting_players:
-            self.setting_career_batting_data[p.player.name] = self.career_batting_data.loc[p.player.name].iloc[
-                -1].to_dict()
-            self.setting_career_bowling_data[p.player.name] = self.career_bowling_data.loc[p.player.name].iloc[
-                -1].to_dict()
+            try:
+                old = career_batting_data.loc[p.player.name].iloc[-1].to_dict()
+                new = update_career_batting(old)
+                self.setting_career_batting_data[p.player.name] = new
+            except KeyError:
+                self.setting_career_batting_data[p.player.name] = debut_career_batting_dict
+            try:
+                old = career_bowling_data.loc[p.player.name].iloc[-1].to_dict()
+                new = update_career_bowling(old)
+                self.setting_career_bowling_data[p.player.name] = new
+            except KeyError:
+                self.setting_career_bowling_data[p.player.name] = debut_career_batting_dict
         self.chasing_career_batting_data = {}
         self.chasing_career_bowling_data = {}
         for p in self.pre_match_state.chasing_players:
-            self.chasing_career_batting_data[p.player.name] = self.career_batting_data.loc[p.player.name].iloc[
-                -1].to_dict()
-            self.chasing_career_bowling_data[p.player.name] = self.career_bowling_data.loc[p.player.name].iloc[
-                -1].to_dict()
+            try:
+                old = career_batting_data.loc[p.player.name].iloc[-1].to_dict()
+                new = update_career_batting(old)
+                self.chasing_career_batting_data[p.player.name] = new
+            except KeyError:
+                self.chasing_career_batting_data[p.player.name] = debut_career_batting_dict
+            try:
+                old = career_bowling_data.loc[p.player.name].iloc[-1].to_dict()
+                new = update_career_bowling(old)
+                self.chasing_career_bowling_data[p.player.name] = new
+            except KeyError:
+                self.chasing_career_bowling_data[p.player.name] = debut_career_bowling_dict
 
         self.batting_team = LiveTeam(self.setting_team, self.pre_match_state, self.setting_career_bowling_data,
                                      self.setting_career_batting_data,
@@ -164,8 +189,8 @@ class LiveMatchSimulator:
         self.bowling_plan = self.sim_bowlers_for_innings()
 
         self.live_match_state['partnership_runs_b4b'] = self.batting_team.partnership_runs
-        self.live_match_state['implied_batting_team_prob'] = \
-            self.historic_match_data['implied_batting_team_prob'].iloc[0]
+        # self.live_match_state['implied_batting_team_prob'] = \
+        #     self.historic_match_data['implied_batting_team_prob'].iloc[0]
 
         while self.innings == 1:
             while (self.over <= 20) and (self.batting_team.bat_wkts < 10):
@@ -235,47 +260,44 @@ class LiveMatchSimulator:
                                                     'batting_position_bat'] == 11
 
         if self.innings == 1:
-            if self.live_match_state['legal_balls_in_innings_b4b'] in self.wicket_splits_1:
-                self.wicket_model = self.wicket_models[(
-                    1, self.live_match_state['legal_balls_in_innings_b4b'], self.live_match_state['batter_first_ball'])]
+            self.wicket_model = self.wicket_models[(
+                self.innings, find_le(self.wicket_splits_1, self.live_match_state['legal_balls_in_innings_b4b']),
+                self.live_match_state['batter_first_ball'])]
         else:
-            if self.live_match_state['legal_balls_in_innings_b4b'] in self.wicket_splits_2:
-                self.wicket_model = self.wicket_models[(
-                    2, self.live_match_state['legal_balls_in_innings_b4b'], self.live_match_state['batter_first_ball'])]
+            self.wicket_model = self.wicket_models[(
+                self.innings, find_le(self.wicket_splits_2, self.live_match_state['legal_balls_in_innings_b4b']),
+                self.live_match_state['batter_first_ball'])]
 
         if self.live_match_state['batter_no_11']:
             self.runs_model = self.runs_models[(self.innings,
-                                                'N/A',
-                                                self.live_match_state['batter_on_0'],
-                                                self.live_match_state['batter_no_11'],
-                                                'N/A')]
+                                                    'N/A',
+                                                     self.live_match_state['batter_on_0'],
+                                                     self.live_match_state['batter_no_11'],
+                                                    'N/A')]
+        elif self.live_match_state['legal_balls_in_innings_b4b'] < 12:
+            self.runs_model = self.runs_models[(self.innings,
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    'N/A',
+                                                    self.live_match_state['batter_no_11'],
+                                                    'N/A')]
+        elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
+            self.runs_model = self.runs_models[(self.innings,
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    self.live_match_state['batter_on_0'],
+                                                    self.live_match_state['batter_no_11'],
+                                                    self.live_match_state['senior_partner'])]
+        elif self.live_match_state['legal_balls_in_innings_b4b'] >= 118:
+            self.runs_model = self.runs_models[(self.innings,
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    self.live_match_state['batter_on_0'],
+                                                    self.live_match_state['batter_no_11'],
+                                                    'N/A')]
         else:
-            if self.live_match_state['legal_balls_in_innings_b4b'] in self.run_splits:
-                if self.live_match_state['legal_balls_in_innings_b4b'] < 12:
-                    self.runs_model = self.runs_models[(self.innings,
-                                                        self.live_match_state['legal_balls_in_innings_b4b'],
-                                                        'N/A',
-                                                        self.live_match_state['batter_no_11'],
-                                                        'N/A')]
-                elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (
-                        self.live_match_state['legal_balls_in_innings_b4b'] < 108):
-                    self.runs_model = self.runs_models[(self.innings,
-                                                        self.live_match_state['legal_balls_in_innings_b4b'],
-                                                        self.live_match_state['batter_on_0'],
-                                                        self.live_match_state['batter_no_11'],
-                                                        self.live_match_state['senior_partner'])]
-                elif self.live_match_state['legal_balls_in_innings_b4b'] >= 118:
-                    self.runs_model = self.runs_models[(self.innings,
-                                                        self.live_match_state['legal_balls_in_innings_b4b'],
-                                                        self.live_match_state['batter_on_0'],
-                                                        self.live_match_state['batter_no_11'],
-                                                        'N/A')]
-                else:
-                    self.runs_model = self.runs_models[(self.innings,
-                                                        self.live_match_state['legal_balls_in_innings_b4b'],
-                                                        self.live_match_state['batter_on_0'],
-                                                        self.live_match_state['batter_no_11'],
-                                                        'N/A')]
+            self.runs_model = self.runs_models[(self.innings,
+                                                    find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
+                                                    self.live_match_state['batter_on_0'],
+                                                    self.live_match_state['batter_no_11'],
+                                                    'N/A')]
 
         self.live_match_state['wickets_in_innings_b4b'] = int(self.batting_team.bat_wkts)
         self.live_match_state['wl_squared'] = (self.live_match_state['wickets_in_innings_b4b'] - 3) ** 2
@@ -289,8 +311,7 @@ class LiveMatchSimulator:
             1 + self.batting_team.onstrike.current_match_stats['striker_runs_b4b'], 10)
         self.live_match_state['strike_rate_b4b'] = self.batting_team.onstrike.current_match_stats['strike_rate_b4b']
         self.live_match_state['shit_rating_bat'] = self.batting_team.onstrike.historic_career_stats['shit_rating_bat']
-        self.live_match_state['bowling_style_bowl'] = self.bowling_team.bowler.historic_career_stats[
-            'bowling_style_bowl']
+        self.live_match_state['bowling_style_bowl'] = self.bowling_team.bowler.historic_career_stats['bowling_style_bowl']
         self.live_match_state['partner_run_diff'] = self.batting_team.onstrike.current_match_stats['striker_runs_b4b'] - \
                                                     self.batting_team.offstrike.current_match_stats['striker_runs_b4b']
 
@@ -377,7 +398,7 @@ class LiveMatchSimulator:
                 6 * self.bowling_team.bowler.current_match_stats['bowler_runs_b4b'] / \
                 self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b']
             self.live_match_state['prop_bowler_wides_in_game'] = min(
-                max(self.bowling_team.bowler.current_match_stats['bowler_wides_in_game'] / \
+                max(self.bowling_team.bowler.current_match_stats['bowler_wides_in_game_b4b'] / \
                     self.bowling_team.bowler.current_match_stats['bowler_balls_bowled_b4b'], 0), 1)
         else:
             self.bowling_team.bowler.current_match_stats['bowler_er_b4b'] = 0
@@ -440,7 +461,7 @@ class LiveMatchSimulator:
 
         if outcome == '0':
             self.ball += 1
-            self.bowling_team.bowler.current_match_stats['bowler_dots_b4b'] += 1
+            # self.bowling_team.bowler.current_match_stats['bowler_dots_b4b'] += 1
             self.bowling_team.bowler.current_match_stats['bowler_0_b4b'] += 1
             self.batting_team.onstrike.current_match_stats['striker_0_b4b'] += 1
             self.batting_team.onstrike.current_match_stats['strike_rate_b4b'] = \
@@ -560,7 +581,7 @@ class LiveMatchSimulator:
                 nb_dist = [0.625, 0.375]
                 run_outcome = choices(self.nb_outcomes, nb_dist)[0]
             else:
-                self.bowling_team.bowler.current_match_stats['bowler_wides_in_game'] += 1
+                self.bowling_team.bowler.current_match_stats['bowler_wides_in_game_b4b'] += 1
                 wide_dist = [0.91, 0.045, 0.045]
                 run_outcome = choices(self.wide_outcomes, wide_dist)[0]
 
@@ -617,13 +638,14 @@ class LiveMatchSimulator:
             bowling_plan = []
         else:
             # look for which bowler bowled the current over irl
-            outcome = [b for b, v in potential_bowlers.items() if
-                       v.historic_career_stats['bowled_over_{}_bowl'.format(self.over)] == 1][0]
+            # outcome = [b for b, v in potential_bowlers.items() if
+                       # v.historic_career_stats['bowled_over_{}_bowl'.format(self.over)] == 1][0]
+            outcome = self.bowling_team.bowler
             counter = self.over
-            bowling_plan = [potential_bowlers[outcome]]
+            bowling_plan = [outcome]
             potential_bowlers = {k: v for k, v in potential_bowlers.items() if
-                                 potential_bowlers[k].historic_career_stats[
-                                     'overs_bowled_after_{}_bowl'.format(self.over)] < max_possible_overs}
+                                 potential_bowlers[k].current_match_stats['overs_bowled_after_{}_bowl'.format(self.over)] <
+                                 max_possible_overs}
 
         for i in range(counter + 1, 21):
             model = self.bowling_models['bowling_model_{}'.format(i)]
@@ -636,33 +658,31 @@ class LiveMatchSimulator:
                 outcome = choices(list(potential_bowlers.keys()), bowler_prob)[0]
                 for n, b in potential_bowlers.items():
                     if n == outcome:
-                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 1
-                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = 1
+                        b.current_match_stats['bowled_over_{}_bowl'.format(i)] = 1
+                        b.current_match_stats['overs_bowled_after_{}_bowl'.format(i)] = 1
                     else:
-                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 0
-                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = 0
+                        b.current_match_stats['bowled_over_{}_bowl'.format(i)] = 0
+                        b.current_match_stats['overs_bowled_after_{}_bowl'.format(i)] = 0
             else:
                 previous_bowler = outcome
                 p_b = []
                 temp = {k: v for k, v in potential_bowlers.items() if k != previous_bowler}
                 for n, b in temp.items():
-                    p_b = np.append(p_b, calculate_probit_model_probability(b.historic_career_stats, model))
+                    reg = b.historic_career_stats.copy()
+                    reg.update(b.current_match_stats)
+                    p_b = np.append(p_b, calculate_probit_model_probability(reg, model))
                     # want to temporarily drop bowler who bowled the last over,
                     # and perma-drop anyone who has bowled 4 overs.
                 bowler_prob = p_b / sum(p_b)
                 outcome = choices(list(temp.keys()), bowler_prob)[0]
                 for n, b in potential_bowlers.items():
                     if n == outcome:
-                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 1
-                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = \
-                            b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i - 1)] + \
-                            b.historic_career_stats['bowled_over_{}_bowl'.format(i)]
-                    else:
-                        b.historic_career_stats['bowled_over_{}_bowl'.format(i)] = 0
-                        b.historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] = b.historic_career_stats[
-                            'overs_bowled_after_{}_bowl'.format(i - 1)]
+                        b.current_match_stats['bowled_over_{}_bowl'.format(i)] = 1
+                        b.current_match_stats['overs_bowled_after_{}_bowl'.format(i)] = \
+                            b.current_match_stats['overs_bowled_after_{}_bowl'.format(i - 1)] + \
+                            b.current_match_stats['bowled_over_{}_bowl'.format(i)]
 
-                if potential_bowlers[outcome].historic_career_stats['overs_bowled_after_{}_bowl'.format(i)] \
+                if potential_bowlers[outcome].current_match_stats['overs_bowled_after_{}_bowl'.format(i)] \
                         == max_possible_overs:
                     del potential_bowlers[outcome]
             bowling_plan.append(self.bowling_team.bowlers[outcome])
@@ -766,11 +786,50 @@ class LiveMatchSimulator:
             scores = []
         return simulated_first_innings_scores
 
-    # def live_first_innings_sim(self,
-    #                            n):  # this method will take the match state at ball x and simulate the end of innings score n times
-    #     j = 0
-    #     scores = []
-    #     simulated_scores = OrderedDict()
+
+if __name__ == '__main__':
+    career_batting_data = pd.read_pickle('/Users/julianbennettlongley/batting_careers.pkl')
+    career_bowling_data = pd.read_pickle('/Users/julianbennettlongley/bowling_careers.pkl')
+    with open('/Users/julianbennettlongley/wickets_last_attempt.pkl', 'rb') as f:
+        wickets = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/wides_glm_over.pkl', 'rb') as f:
+        wides = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/runs_models_ex_threes_last_attempt.pkl', 'rb') as f:
+        runs = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/runs_models_threes_over.pkl', 'rb') as f:
+        threes = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/nbs_glm_over.pkl', 'rb') as f:
+        nbs = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/bowling_models_playing_role.pkl', 'rb') as f:
+        bowling_models = cloudpickle.load(f)
+
+    bounds = pd.read_pickle('/Users/julianbennettlongley/winsorisation_bounds.pkl')
+
+    for k, v in bowling_models.items():
+        bowling_models[k] = SlimRegModel(None, v)
+
+    pms = pd.read_pickle('/Users/julianbennettlongley/pms.pkl')
+    in_game = pd.read_pickle('/Users/julianbennettlongley/live_dupes_removed.pkl')
+    lms = LiveMatchState(pms)
+    for i in range(78):
+        lms.update(in_game[i])
+
+    lm_sim = LiveMatchSimulator('1307297', '1307289', pms, career_bowling_data,
+                 career_batting_data, wickets, runs, threes, wides,
+                 nbs, bowling_models, bounds, debug=False)
+
+    r = lm_sim.sim_live_match('innings', lms)
+
+
+
+
+
+
 
 
 
