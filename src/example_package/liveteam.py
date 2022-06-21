@@ -1,4 +1,5 @@
 import numpy as np
+from liveplayer import *
 
 #once we know the XI players and toss outcome, we do this ting
 class LiveTeam:
@@ -73,7 +74,7 @@ class LiveTeam:
                 # instantiate a new bowler class with the current stats
                 bowler.insert_initial_stats([b for b in cf_bowlers_so_far if b.name==name][0])
             # and it's the first innings, then I'm bowling
-            if latest_ball['innings'] == 1:
+            if live_match_state.innings == 1:
                 self.bat_total = 0
                 self.bat_wkts = 0
                 self.bat_bwl = 'bowl'

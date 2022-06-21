@@ -4,6 +4,7 @@
 # is to set the state for ball 5 here
 
 # batter object needs instantiation when? start of game you'd think...bowlers trickier
+import numpy as np
 
 class Batter:
     def __init__(self, player):
@@ -36,6 +37,8 @@ class Bowler:
         self.bowler_2 = 0
         self.bowler_4 = 0
         self.bowler_6 = 0
+        self.bowled_over_x = [0] * 20
+        self.overs_bowled_after_x = [0] * 20
 
 
 class PreMatchState:
@@ -71,7 +74,7 @@ class PreMatchState:
 
 
 class LiveMatchState:
-    def __init__(self, pre_match_object):  # wut?):
+    def __init__(self, pre_match_object):
         self.runs_required = 0
         self.innings_runs = 0
         self.required_run_rate = 0
@@ -79,7 +82,8 @@ class LiveMatchState:
         self.run_rate = 0
         self.innings = 1
         self.over = 1
-        self.ball = 0
+        self.balls_actual = 0
+        self.balls_unique = 0
         self.timestamp = 0
         self.wickets_in_innings = 0
         self.batter_id = 0
@@ -98,21 +102,12 @@ class LiveMatchState:
         self.bowling_team = pre_match_object.chasing_team  # change over at end of innings
         self.legal_balls_in_innings = 0
         self.legal_balls_remaining_in_innings = 120
-        self.batting_position_bat = 0
-        self.striker_runs = 0
-        self.striker_balls_faced_ = 0
-        self.strike_rate = 0
-        self.non_striker_runs = 0
-        self.non_striker_balls_faced_ = 0
-        self.non_striker_strike_rate = 0
-        self.bowler_balls_bowled = 0
         self.batting_partners = []
         self.partnership_runs = 0
         self.wicket = 0
         self.runs_inc_blb = 0
         self.is_wide = 0
         self.is_no_ball = 0
-        self.bowler_wides_in_game = 0
         self.comm_id = 0
 
     def update(self, latest_comment):
@@ -143,13 +138,13 @@ class LiveMatchState:
         # this shit breaks when the striker gets out... handle this
         striker = [b for b in self.batters if b.id == self.batter_id][0]
         striker_summary = [b for b in latest_scorecard.inningBatsmen if b.player.id == striker.id][0]
-        striker.batting_position_bat = \
+        striker.batting_position = \
         [i for i, b in enumerate(latest_scorecard.inningBatsmen) if b.player.id == self.batter_id][0] + 1
         striker.striker_runs = striker_summary.runs
         striker.striker_balls_faced = striker_summary.balls
         striker.strike_rate = striker_summary.strikerate
         non_striker = [b for b in self.batters if b.id == self.non_striker_id][0]
-        non_striker.batting_position_bat = \
+        non_striker.batting_position = \
         [i for i, b in enumerate(latest_scorecard.inningBatsmen) if b.player.id == self.non_striker_id][0] + 1
         non_striker.striker_runs = non_striker_summary.runs
         non_striker.striker_balls_faced = non_striker_summary.balls
@@ -158,6 +153,8 @@ class LiveMatchState:
         bowler_summary = [b for b in latest_scorecard.inningBowlers if b.currentType == 1][0]
         bowler.bowler_balls_bowled = bowler_summary.balls
         bowler.bowler_runs = bowler_summary.conceded
+        bowler.bowled_over_x[self.over - 1] = 1
+        bowler.overs_bowled_after_x = np.cumsum(bowler.bowled_over_x)
         current_partnership = [p for p in latest_scorecard.inningPartnerships if p.isLive == True]
         if len(current_partnership) > 0:
             current_partnership = current_partnership[0]
@@ -185,5 +182,10 @@ class LiveMatchState:
         self.non_striker = non_striker
         self.bowler = bowler
 
-    def change_innings(self):
-        pass
+    def change_innings(self): # run this method at end of first innings, but what's the trigger?
+        temp = self.batters
+        self.batters = self.bowlers
+        self.bowlers = temp
+        tempteam = self.batting_team
+        self.batting_team = self.bowling_team
+        self.bowling_team = tempteam
