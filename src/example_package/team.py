@@ -20,6 +20,7 @@ class SimpleHistoricTeam:
             self.bowlers = {name: Bowler(pp, career_bowling_data) for name, pp
                             in self.match_row['chasing_players'].items()}
 
+        # TODO: data is now taking both openers as #2, so fix this up!
         self.batting_order = {i + 1: x for i, x in enumerate(self.batters.values())}  # batting order
 
             # batting innings state
@@ -32,7 +33,7 @@ class SimpleHistoricTeam:
         self.bwl_wkts = 0
 
         self.onstrike = self.batting_order[1]
-        self.onstrike.current_match_stats['batting_position_bat'] = 1
+        self.onstrike.current_match_stats['batting_position_bat'] = 2
         self.offstrike = self.batting_order[2]
         self.offstrike.current_match_stats['batting_position_bat'] = 2
         self.bat_bwl = ''

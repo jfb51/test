@@ -28,6 +28,7 @@ class Batter:
 
     def insert_initial_stats(self, current_match_stats):
         self.current_match_stats = {attr: current_match_stats[attr] for attr in self.batter_in_game_attributes}
+        self.current_match_stats['batting_position_bat'] = max(2, self.current_match_stats['batting_position_bat'])
 
     def zero_stats(self):
         self.current_match_stats = {c: 0 for c in self.batter_in_game_attributes}

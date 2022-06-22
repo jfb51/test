@@ -231,7 +231,6 @@ class HistoricMatchSimulator:
                 self.innings, find_le(self.wicket_splits_2, self.live_match_state['legal_balls_in_innings_b4b']),
                 self.live_match_state['batter_first_ball'])]
 
-
         if self.live_match_state['batter_no_11']:
             self.runs_model = self.runs_models[(self.innings,
                                                     'N/A',
