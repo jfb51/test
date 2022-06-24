@@ -34,7 +34,6 @@ class HistoricMatchSimulator:
         self.live_match_state['innings_runs_b4b'] = 0
         self.live_match_state['required_run_rate'] = 0
         self.live_match_state['over_runs_b4b'] = 0
-        self.career_bowling_data_dict = self.career_bowling_data.droplevel(1).to_dict(orient='index')
         self.outcomes = ['0', '1', '2', '4', '6', 'w', 'nb', 'W', '3']
         self.wide_outcomes = [1, 2, 5]
         self.nb_outcomes = [1, 2]

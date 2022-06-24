@@ -5,7 +5,7 @@ class Bowler:
                                           'bowler_1_b4b', 'bowler_2_b4b', 'bowler_4_b4b', 'bowler_6_b4b',
                                           'bowler_wides_in_game']
         self.pp = pp
-        self.historic_career_stats = historic_career_stats.loc[self.pp['unique_name']].to_dict(orient='records')[0]
+        self.historic_career_stats = historic_career_stats[self.pp['unique_name']]
         self.historic_career_stats['bowling_style'] = self.pp['simple_bowling']
         self.current_match_stats = {c: 0 for c in self.bowler_in_game_attributes}
 
@@ -22,7 +22,7 @@ class Batter:
                                           'strike_rate_b4b', 'striker_0_b4b', 'striker_1_b4b', 'striker_2_b4b',
                                           'striker_4_b4b', 'striker_6_b4b']
         self.pp = pp
-        self.historic_career_stats = historic_career_stats.loc[self.pp['unique_name']].to_dict(orient='records')[0]
+        self.historic_career_stats = historic_career_stats[self.pp['unique_name']]
         self.historic_career_stats['batting_style'] = self.pp['Batting Style']
         self.current_match_stats = {c: 0 for c in self.batter_in_game_attributes}
 

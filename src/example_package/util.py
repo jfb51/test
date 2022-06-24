@@ -4,6 +4,21 @@ from math import erf
 from operator import itemgetter
 import bisect
 
+
+class SlimRegModel:
+    def __init__(self, condition, model):
+        self.condition = condition
+        self.model_variables = [s.strip() for s in model.model.data.formula.split('~')[1].split('+')]
+        self.model_params = model.params.to_dict()
+        if 'bowling_style_bowl' in self.model_variables:
+            self.model_params['bowling_style_bowl[T.right_arm_seam]'] = 0
+        if 'event_name' in self.model_variables:
+            self.model_params['event_name[T.Bangladesh Premier League]'] = 0
+        if 'playing_role_bowl' in self.model_variables:
+            self.model_params['playing_role_bowl[T.Allrounder]'] = 0
+        self.model_params = OrderedDict(sorted(self.model_params.items()))
+
+
 def kelly_bet(row, commission=0.05, bankroll=1000):
     if row.side == "None":
         return 0
@@ -37,7 +52,7 @@ def match_data(match_id, bbb_df):
 
 
 def careers(match_id, career_df):
-    return career_df.xs(match_id, level=1)
+    return career_df.xs(match_id, level=1).droplevel(1).to_dict(orient='index')
 
 
 def phi(z):
@@ -139,3 +154,69 @@ def find_le(a, x):
     if i:
         return a[i-1]
     raise ValueError
+
+
+def update_career_bowling(bowling_dict):
+    for k, v in list(bowling_dict.items()):
+        if k.startswith('overs_bowled_after') or k.endswith('prev_match_bowl'):  # this is now 2 matches ago...
+            del bowling_dict[k]
+
+    for k, v in list(bowling_dict.items()):
+        if k.startswith('bowled_over'):
+            eh = bowling_dict.pop(k)
+            bowling_dict['{}_prev_match_bowl'.format(k[:-5])] = eh
+
+    for k, v in list(bowling_dict.items()):
+        if type(bowling_dict[k]) != str:
+            if np.isnan(bowling_dict[k]):
+                bowling_dict[k] = 0
+
+    bowling_dict['cum_dots_bowl'] += bowling_dict['dots_bowl']
+    bowling_dict['cum_balls_bowled_bowl'] += bowling_dict['balls_bowled_bowl']
+    bowling_dict['cum_wickets_b4m_bowl'] = bowling_dict['cum_wickets']
+    for c in ['ones', 'twos', 'threes', 'fours', 'sixes', 'wides', 'nbs']:
+        bowling_dict['cum_{}_bowl'.format(c)] += bowling_dict['{}_conceded_bowl'.format(c)]
+        bowling_dict['prop_{}_bowl'.format(c)]: bowling_dict['cum_{}_bowl'.format(c)] / bowling_dict[
+            'cum_balls_bowled_bowl']
+    for i in range(1, 21):
+        bowling_dict['cum_overs_{}_bowl'.format(i)] += bowling_dict['bowled_over_{}_prev_match_bowl'.format(i)]
+    bowling_dict['cum_mid_overs_bowl'] += bowling_dict['middle_overs_bowled_bowl']
+    if bowling_dict['cum_mid_overs_bowl'] > 0:
+        bowling_dict['prop_mid_bowl'] = 6 * bowling_dict['cum_mid_overs_bowl'] / bowling_dict['cum_balls_bowled_bowl']
+    else:
+        bowling_dict['prop_mid_bowl'] = 0
+    for s in ['pp', 'death']:
+        bowling_dict['cum_{}_overs_bowl'.format(s)] += bowling_dict['{}_overs_bowled_bowl'.format(s)]
+        if bowling_dict['cum_{}_overs_bowl'.format(s)] > 0:
+            bowling_dict['prop_{}_bowl'.format(s)] = 6 * bowling_dict['cum_{}_overs_bowl'.format(s)] / bowling_dict[
+                'cum_balls_bowled_bowl']
+        else:
+            bowling_dict['prop_{}_bowl'.format(s)] = 0
+    #         bowling_dict['economy_rate_bowl'] = /bowling_dict['cum_balls_bowled_bowl']
+    if bowling_dict['cum_wickets_b4m_bowl'] > 0:
+        bowling_dict['strike_rate_bowl'] = bowling_dict['cum_balls_bowled_bowl'] / bowling_dict['cum_wickets_b4m_bowl']
+    else:
+        bowling_dict['strike_rate_bowl'] = 0
+    # the ewms have not been updated, nor has the "shit rating", cbf with the economy rate for now.
+    return bowling_dict
+
+
+def update_career_batting(batting_dict):
+    for k, v in list(batting_dict.items()):
+        if type(batting_dict[k]) != str:
+            if np.isnan(batting_dict[k]):
+                batting_dict[k] = 0
+    batting_dict['cum_balls_bat'] += batting_dict['balls_orig_bat']
+    batting_dict['cum_outs_b4m'] = batting_dict['cum_outs']
+    for c in ['dots', 'ones', 'twos', 'threes', 'fours', 'sixes']:
+        batting_dict['cum_{}_bat'.format(c)] += batting_dict['{}_bat'.format(c)]
+        if batting_dict['cum_balls_bat'] > 0:
+            batting_dict['prop_{}_bat'.format(c)] = batting_dict['cum_{}_bat'.format(c)]/batting_dict['cum_balls_bat']
+        else:
+            batting_dict['prop_{}_bat'.format(c)] = 0
+    if batting_dict['cum_balls_bat'] > 0:
+        batting_dict['out_per_ball'] = batting_dict['cum_outs_b4m']/batting_dict['cum_balls_bat']
+    else:
+        batting_dict['out_per_ball'] = 0
+    #the ewms have not been updated, nor has the "shit rating".
+    return batting_dict
