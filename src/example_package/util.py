@@ -3,6 +3,7 @@ from collections import namedtuple, OrderedDict
 from math import erf
 from operator import itemgetter
 import bisect
+import pandas as pd
 
 
 class SlimRegModel:
@@ -220,3 +221,49 @@ def update_career_batting(batting_dict):
         batting_dict['out_per_ball'] = 0
     #the ewms have not been updated, nor has the "shit rating".
     return batting_dict
+
+def runs_required(df, target):
+    if df.innings==1:
+        return 0
+    else:
+        return max(target - df.innings_runs_b4b, 0)
+
+def annotate_match_data(match_data):
+    #most things have to be annotated before the ball is bowled.
+    match_data['innings_runs_b4b'] = match_data.groupby('innings').apply(lambda x: np.cumsum(x.runs_off_bat + x.extras).shift().fillna(0)).values
+    match_data['innings_runs'] = match_data.groupby('innings').apply(lambda x: np.cumsum(x.runs_off_bat + x.extras)).values
+    match_data['over'] = np.floor(match_data.ball+1)
+    match_data['over_runs_b4b'] = match_data.groupby(['innings','over']).apply(lambda x: np.cumsum(x.runs_off_bat + x.extras).shift().fillna(0)).values
+    match_data['over_runs'] = match_data.groupby(['innings','over']).apply(lambda x: np.cumsum(x.runs_off_bat + x.extras)).values
+    match_data['legal_ball'] = ~((match_data.wides > 0)|(match_data.noballs > 0))
+    match_data['legal_balls_in_innings_b4b'] = match_data.groupby(['innings']).apply(lambda x: np.cumsum(x.legal_ball).shift().fillna(0)).values
+    match_data['legal_balls_remaining_in_innings'] = 120-match_data.legal_balls_in_innings_b4b
+    match_data['run_rate_b4b'] = np.clip(6*match_data.innings_runs_b4b/match_data.legal_balls_in_innings_b4b, a_max=36, a_min=0).fillna(0)
+    match_data['wickets_in_innings_b4b'] = match_data.groupby(['innings']).apply(lambda x: np.cumsum(~pd.isnull(x.wicket_type)).shift().fillna(0)).values
+    target = match_data[lambda x: x.innings==1].iloc[-1].innings_runs_b4b + match_data[lambda x: x.innings==1].iloc[-1].runs_off_bat + match_data[lambda x: x.innings==1].iloc[-1].extras + 1
+    match_data['runs_required'] = match_data.apply(lambda x: runs_required(x, target), axis=1)
+    match_data['required_run_rate'] = 6*match_data.runs_required/match_data.legal_balls_remaining_in_innings
+    match_data['striker_runs_b4b'] = match_data.groupby('striker')['runs_off_bat'].apply(lambda x: np.cumsum(x).shift().fillna(0))
+    match_data['striker_runs'] = match_data.groupby('striker')['runs_off_bat'].apply(lambda x: np.cumsum(x))
+    match_data['striker_balls_faced_b4b'] = match_data.groupby('striker')['legal_ball'].apply(lambda x: np.cumsum(x).shift().fillna(0))
+    match_data['striker_balls_faced'] = match_data.groupby('striker')['legal_ball'].apply(lambda x: np.cumsum(x))
+    match_data['strike_rate'] = 100*match_data.striker_runs/match_data.striker_balls_faced
+    match_data['strike_rate_b4b'] = (100*match_data.striker_runs_b4b/match_data.striker_balls_faced_b4b).fillna(0)
+    match_data[['wides','noballs','byes','legbyes','penalty']] = match_data[['wides','noballs','byes','legbyes','penalty']].fillna(0)
+    match_data['bowler_extras'] = match_data.wides + match_data.noballs
+    match_data['bowler_runs'] = match_data.groupby('bowler').apply(lambda x: np.cumsum(x.runs_off_bat + x.bowler_extras)).sort_index(level=1).values
+    match_data['bowler_runs_b4b'] = match_data.groupby('bowler').apply(lambda x: np.cumsum(x.runs_off_bat + x.bowler_extras).shift().fillna(0)).sort_index(level=1).values
+    match_data['bowler_dots'] = match_data.groupby('bowler').apply(lambda x: np.cumsum((x.runs_off_bat+x.bowler_extras)==0)).sort_index(level=1).values
+    match_data['bowler_dots_b4b'] = match_data.groupby('bowler').apply(lambda x: np.cumsum((x.runs_off_bat+x.bowler_extras)==0).shift().fillna(0)).sort_index(level=1).values
+    match_data['bowler_wickets'] = match_data.groupby('bowler').apply(lambda x: np.cumsum(~pd.isnull(x.wicket_type) & (x.wicket_type != 'run out'))).sort_index(level=1).values
+    match_data['bowler_wickets_b4b'] = match_data.groupby('bowler').apply(lambda x: np.cumsum(~pd.isnull(x.wicket_type) & (x.wicket_type != 'run out')).shift().fillna(0)).sort_index(level=1).values
+    match_data['bowler_balls_bowled'] = match_data.groupby('bowler')['legal_ball'].apply(lambda x: np.cumsum(x))
+    match_data['bowler_balls_bowled_b4b'] = match_data.groupby('bowler')['legal_ball'].apply(lambda x: np.cumsum(x).shift().fillna(0))
+    match_data['bowler_er'] = 6*match_data.bowler_runs/match_data.bowler_balls_bowled
+    match_data['bowler_er_b4b'] = (6*match_data.bowler_runs_b4b/match_data.bowler_balls_bowled_b4b).fillna(0)
+    match_data['batting_partners'] = match_data.apply(lambda x: str(sorted([x.striker,x.non_striker])), axis=1)
+    match_data['partnership_runs'] = match_data.groupby('batting_partners').apply(lambda x: np.cumsum(x.runs_off_bat + x.extras)).sort_index(level=1).values
+    match_data['partnership_runs_b4b'] = match_data.groupby('batting_partners').apply(lambda x: np.cumsum(x.runs_off_bat + x.extras).shift().fillna(0)).sort_index(level=1).values
+    match_data['is_powerplay'] = match_data.over < 7
+    match_data['wicket'] = ~pd.isnull(match_data.wicket_type)
+    return match_data
