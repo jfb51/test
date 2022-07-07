@@ -6,7 +6,6 @@ class Bowler:
                                           'bowler_wides_in_game']
         self.pp = pp
         self.historic_career_stats = historic_career_stats[self.pp['unique_name']]
-        self.historic_career_stats['bowling_style'] = self.pp['simple_bowling']
         self.current_match_stats = {c: 0 for c in self.bowler_in_game_attributes}
 
     def insert_initial_stats(self, current_match_stats):

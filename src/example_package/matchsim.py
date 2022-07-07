@@ -29,7 +29,7 @@ class HistoricMatchSimulator:
         self.bounds = bounds
         self.live_match_state = dict()
         self.live_match_state['event_name'] = self.match_row['event_name']
-        self.live_match_state['avg_ground_rpo'] = self.match_row['avg_ground_rpo']
+        self.live_match_state['avg_city_rpo'] = self.match_row['avg_city_rpo']
         self.live_match_state['runs_required'] = 0
         self.live_match_state['innings_runs_b4b'] = 0
         self.live_match_state['required_run_rate'] = 0
@@ -116,13 +116,13 @@ class HistoricMatchSimulator:
                                                      self.live_match_state['batter_on_0'],
                                                      self.live_match_state['batter_no_11'],
                                                     'N/A')]
-            elif self.live_match_state['legal_balls_in_innings_b4b'] < 12:
+            elif self.live_match_state['legal_balls_in_innings_b4b'] < 24:
                 self.runs_model = self.runs_models[(self.innings,
                                                     find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     'N/A',
                                                     self.live_match_state['batter_no_11'],
                                                     'N/A')]
-            elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
+            elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 24) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
                 self.runs_model = self.runs_models[(self.innings,
                                                     find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     self.live_match_state['batter_on_0'],
@@ -236,13 +236,13 @@ class HistoricMatchSimulator:
                                                      self.live_match_state['batter_on_0'],
                                                      self.live_match_state['batter_no_11'],
                                                     'N/A')]
-        elif self.live_match_state['legal_balls_in_innings_b4b'] < 12:
+        elif self.live_match_state['legal_balls_in_innings_b4b'] < 24:
             self.runs_model = self.runs_models[(self.innings,
                                                     find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     'N/A',
                                                     self.live_match_state['batter_no_11'],
                                                     'N/A')]
-        elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 12) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
+        elif (self.live_match_state['legal_balls_in_innings_b4b'] >= 24) & (self.live_match_state['legal_balls_in_innings_b4b'] < 108):
             self.runs_model = self.runs_models[(self.innings,
                                                     find_le(self.run_splits, self.live_match_state['legal_balls_in_innings_b4b']),
                                                     self.live_match_state['batter_on_0'],
@@ -341,9 +341,9 @@ class HistoricMatchSimulator:
                                                   bowler_career_balls)
 
         self.live_match_state['wickets_matchup'] = (batter_weight * (
-        self.batting_team.onstrike.historic_career_stats['cum_outs_b4m']) / batter_career_balls) + \
+        self.batting_team.onstrike.historic_career_stats['cum_outs_b4m_bat']) / batter_career_balls) + \
                                                    (bowler_weight * (self.bowling_team.bowler.historic_career_stats[
-                                                                         'cum_wickets_b4m_bowl'] +
+                                                                         'cum_wickets_b4m_bowl_bowl'] +
                                                                      self.bowling_team.bowler.current_match_stats[
                                                                          'bowler_wickets_b4b']) / bowler_career_balls)
 
