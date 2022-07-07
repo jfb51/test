@@ -151,8 +151,6 @@ class HistoricMatchSimulator:
         self.bowling_plan = self.sim_bowlers_for_innings()
 
         self.live_match_state['partnership_runs_b4b'] = self.batting_team.partnership_runs
-        self.live_match_state['implied_batting_team_prob'] = \
-            self.historic_match_data['implied_batting_team_prob'].iloc[0]
 
         while self.innings == 1:
             while (self.over <= 20) and (self.batting_team.bat_wkts < 10):
@@ -572,8 +570,6 @@ class HistoricMatchSimulator:
         self.over = 1
         self.ball = 0
         self.innings = 2
-        self.live_match_state['implied_batting_team_prob'] \
-            = self.historic_match_data[lambda x: x.innings == self.innings]['implied_batting_team_prob'].iloc[0]
         self.bowling_plan = self.sim_bowlers_for_innings()
         self.live_match_state['innings_runs_b4b'] = 0
         self.live_match_state['partnership_runs_b4b'] = 0
