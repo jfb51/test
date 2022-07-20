@@ -95,7 +95,7 @@ class SimpleHistoricTeam:
                 self.bwl_wkts = latest_ball['wickets_in_innings_b4b']
                 self.bowler = self.bowlers[latest_ball['bowler']] #bowler instance
                 self.onstrike = self.batting_order[1]
-                self.onstrike.current_match_stats['batting_position_bat'] = 1
+                self.onstrike.current_match_stats['batting_position_bat'] = 2
                 self.offstrike = self.batting_order[2]
                 self.offstrike.current_match_stats['batting_position_bat'] = 2
             # and it's the second innings, then I've batted already
@@ -110,7 +110,7 @@ class SimpleHistoricTeam:
                 self.bwl_wkts = latest_ball['wickets_in_innings_b4b']
                 self.bowler = self.bowlers[latest_ball['bowler']]
                 self.onstrike = self.batting_order[1]
-                self.onstrike.current_match_stats['batting_position_bat'] = 1
+                self.onstrike.current_match_stats['batting_position_bat'] = 2
                 self.offstrike = self.batting_order[2]
                 self.offstrike.current_match_stats['batting_position_bat'] = 2
 
