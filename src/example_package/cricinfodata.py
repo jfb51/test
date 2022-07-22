@@ -6,6 +6,7 @@
 # batter object needs instantiation when? start of game you'd think...bowlers trickier
 import numpy as np
 
+
 class Batter:
     def __init__(self, player):
         self.id = player.id
@@ -42,7 +43,7 @@ class Bowler:
 
 
 class PreMatchState:
-    def __init__(self):
+    def __init__(self, pre_match_object):
         self.venue = ''
         self.teams = []
         self.setting_team = ''
@@ -51,12 +52,14 @@ class PreMatchState:
         self.setting_players = []
         self.chasing_players = []
         self.avg_ground_rpo = 0
+        self.pre_match_object = pre_match_object
+        self.update_some_stuff()
 
-    def update_some_stuff(self, pre_match_object):
-        self.venue = pre_match_object.match.ground.name
-        self.teams = pre_match_object.match.teams
-        toss_winner = pre_match_object.match.tossWinnerTeamId
-        toss_choice = pre_match_object.match.tossWinnerChoice
+    def update_some_stuff(self):
+        self.venue = self.pre_match_object.match.ground.name
+        self.teams = self.pre_match_object.match.teams
+        toss_winner = self.pre_match_object.match.tossWinnerTeamId
+        toss_choice = self.pre_match_object.match.tossWinnerChoice
         toss_winning_team = [t for t in self.teams if t.team.id == toss_winner][0]
         toss_losing_team = [t for t in self.teams if t.team.id != toss_winner][0]
         if toss_choice == 1:
@@ -67,9 +70,9 @@ class PreMatchState:
             self.chasing_team = toss_winning_team.team.name
         self.event_name = 'International'  # not sure yet
         self.setting_players = \
-        [t.players for t in pre_match_object.matchPlayers.teamPlayers if t.team.name == self.setting_team][0]
+        [t.players for t in self.pre_match_object.matchPlayers.teamPlayers if t.team.name == self.setting_team][0]
         self.chasing_players = \
-        [t.players for t in pre_match_object.matchPlayers.teamPlayers if t.team.name == self.chasing_team][0]
+        [t.players for t in self.pre_match_object.matchPlayers.teamPlayers if t.team.name == self.chasing_team][0]
         self.avg_ground_rpo = 8
 
 
@@ -182,10 +185,10 @@ class LiveMatchState:
         self.non_striker = non_striker
         self.bowler = bowler
 
-    def change_innings(self): # run this method at end of first innings, but what's the trigger?
-        temp = self.batters
-        self.batters = self.bowlers
-        self.bowlers = temp
+    def change_innings(self, pre_match_object): # run this method at end of first innings, but what's the trigger?
+        self.batters = [Batter(b.player) for b in pre_match_object.chasing_players]
+        self.bowlers = [Bowler(b.player) for b in pre_match_object.setting_players]
         tempteam = self.batting_team
         self.batting_team = self.bowling_team
         self.bowling_team = tempteam
+        self.innings = 2

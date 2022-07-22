@@ -3,7 +3,7 @@ class LiveBowler:
         self.bowler_in_game_attributes = ['bowler_runs_b4b', 'bowler_wickets_b4b',
                                           'bowler_balls_bowled_b4b', 'bowler_0_b4b',
                                           'bowler_1_b4b', 'bowler_2_b4b', 'bowler_4_b4b', 'bowler_6_b4b',
-                                          'bowler_wides_in_game_b4b'] + \
+                                          'bowler_wides_in_game_b4b', 'bowler_extras'] + \
                                          ['bowled_over_{}_bowl'.format(i) for i in range(1, 21)] + \
                                          ['overs_bowled_after_{}_bowl'.format(i) for i in range(1, 21)]
 

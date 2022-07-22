@@ -6,8 +6,10 @@ import numpy as np
 import math
 from collections import Counter
 from example_package.util import calculate_probit_model_probability, calculate_mnlogit_model_probabilities, \
-    calculate_logit_model_probability, find_le
+    calculate_logit_model_probability, find_le, SlimRegModel, match_row, match_data, careers
 from random import choices
+import cloudpickle
+import pandas as pd
 
 
 class HistoricMatchSimulator:
@@ -745,3 +747,76 @@ class HistoricMatchSimulator:
             j = 0
             scores = []
         return simulated_first_innings_scores
+
+    def prep_obj(self):
+        self.innings = 2
+        temp = self.batting_team
+        self.batting_team = self.bowling_team
+        self.bowling_team = temp
+        self.batting_team.bat_bwl = 'bat'
+        self.bowling_team.bat_bwl = 'bwl'
+
+
+if __name__ == '__main__':
+
+    match_df = pd.read_pickle('/Users/julianbennettlongley/mens_matches_20220705.pkl')
+    ball_by_ball_df = pd.read_pickle('/Users/julianbennettlongley/men_bbb_20220710.pkl')
+    career_batting_data = pd.read_pickle('/Users/julianbennettlongley/batting_careers_20220710.pkl')
+    career_bowling_data = pd.read_pickle('/Users/julianbennettlongley/bowling_careers_20220710.pkl')
+
+    with open('/Users/julianbennettlongley/wickets_20220710.pkl', 'rb') as f:
+        wickets = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/wides_20220710.pkl', 'rb') as f:
+        wides = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/runs_models_20220710.pkl', 'rb') as f:
+        runs = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/threes_20220710.pkl', 'rb') as f:
+        threes = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/nbs_20220710.pkl', 'rb') as f:
+        nbs = cloudpickle.load(f)
+
+    with open('/Users/julianbennettlongley/bowling_models_20220705.pkl', 'rb') as f:
+        bowling_models = cloudpickle.load(f)
+
+    bounds = pd.read_pickle('/Users/julianbennettlongley/winsorisation_bounds.pkl')
+
+    for k, v in bowling_models.items():
+        bowling_models[k] = SlimRegModel(None, v)
+
+    key_match = '1299605'
+    mr = match_row(key_match, match_df)
+    md = match_data(key_match, ball_by_ball_df)
+    batters = careers(key_match, career_batting_data)
+    bowlers = careers(key_match, career_bowling_data)
+    bp_dict = {k: v['batting_position_bat'] for k, v in batters.items()}
+    md['batting_position_bat'] = md['striker'].map(bp_dict)
+    md = md.sort_values(['innings', 'over', 'legal_balls_in_innings_b4b', 'innings_runs_b4b'])
+
+    hm_sim = HistoricMatchSimulator(key_match, mr, md, bowlers, batters, wickets, runs, threes, wides,
+                                nbs, bowling_models, bounds, debug=False)
+
+    # start with the generic sim stuff:
+
+    def parallel_function_tgt(match):
+        winner_per_score = {}
+        scores = np.arange(40, 280)
+        mc = copy.deepcopy(match)
+        ball = [match.historic_match_data[lambda x: x.innings == 2].to_dict(orient='records')[0]]
+        for s in scores:
+            sim = mc.sim_match('match', ball, s)
+            if sim == match.setting_team:
+                winner = 0
+            else:
+                winner = 1
+            winner_per_score[s] = winner
+        return winner_per_score
+
+    n = 1000
+    hm_sim.prep_obj()
+    winner = {}
+    for i in range(n):
+        winner[i] = parallel_function_tgt(hm_sim)

@@ -24,8 +24,8 @@ class LiveTeam:
         self.bwl_total = 0
         self.bwl_wkts = 0
 
-        self.onstrike = self.batting_order[1] #local Batter object =
-        self.onstrike.current_match_stats['batting_position_bat'] = 1
+        self.onstrike = self.batting_order[1] #local Batter object
+        self.onstrike.current_match_stats['batting_position_bat'] = 2 # done to satisfy regression model, no impact in practice.
         self.offstrike = self.batting_order[2]
         self.offstrike.current_match_stats['batting_position_bat'] = 2
         self.bat_bwl = ''
@@ -58,7 +58,7 @@ class LiveTeam:
                 self.bat_wkts = live_match_state.wickets_in_innings
                 self.partnership_runs = live_match_state.partnership_runs
                 if self.simulated_target is not None:
-                    self.bwl_total = self.simulated_target
+                    self.bwl_total = self.simulated_target #TODO: is this correct?
                 else:
                     self.bwl_total = live_match_state.target - 1
                 self.bwl_wkts = 'N/A'  # can get this if necessary
@@ -97,9 +97,72 @@ class LiveTeam:
                 self.bwl_wkts = live_match_state.wickets_in_innings
                 self.bowler = self.bowlers[live_match_state.bowler.name]
                 self.onstrike = self.batting_order[1]
-                self.onstrike.current_match_stats['batting_position_bat'] = 1
+                self.onstrike.current_match_stats['batting_position_bat'] = 2
                 self.offstrike = self.batting_order[2]
                 self.offstrike.current_match_stats['batting_position_bat'] = 2
+
+    def populate_with_start_of_game_state(self, state, simulated_target=None):
+        self.simulated_target = simulated_target
+        # if I'm the batting team
+        if self.name == state.batting_team:
+            # and it's the first innings, then I haven't bowled
+            if state.innings == 1:
+                self.bat_total = state.innings_runs
+                self.bat_wkts = state.wickets_in_innings
+                self.partnership_runs = state.partnership_runs
+                self.bat_bwl = 'bat'
+                self.bwl_total = 0
+                self.bwl_wkts = 0
+                self.onstrike = self.batting_order[1]  # local Batter object
+                self.onstrike.current_match_stats[
+                    'batting_position_bat'] = 2  # done to satisfy regression model, no impact in practice.
+                self.offstrike = self.batting_order[2]
+                self.offstrike.current_match_stats['batting_position_bat'] = 2
+            # and it's the second innings, I've already bowled and am chasing
+            else:
+                self.bat_total = state.innings_runs
+                self.bat_wkts = state.wickets_in_innings
+                self.partnership_runs = state.partnership_runs
+                if self.simulated_target is not None:
+                    self.bwl_total = self.simulated_target  # TODO: is this correct?
+                else:
+                    self.bwl_total = state.target - 1
+                self.bwl_wkts = 'N/A'  # can get this if necessary
+                self.bat_bwl = 'bat'
+                self.onstrike = self.batting_order[1]  # local Batter object
+                self.onstrike.current_match_stats[
+                    'batting_position_bat'] = 2  # done to satisfy regression model, no impact in practice.
+                self.offstrike = self.batting_order[2]
+                self.offstrike.current_match_stats['batting_position_bat'] = 2
+        # if I'm the bowling team
+        else:
+            # and it's the first innings, then I'm bowling
+            if state.innings == 1:
+                self.bat_total = 0
+                self.bat_wkts = 0
+                self.bat_bwl = 'bowl'
+                self.bwl_total = state.innings_runs
+                self.bwl_wkts = state.wickets_in_innings
+                self.bowler = ''
+                # self.onstrike = self.batting_order[1]
+                # self.onstrike.current_match_stats['batting_position_bat'] = 2
+                # self.offstrike = self.batting_order[2]
+                # self.offstrike.current_match_stats['batting_position_bat'] = 2
+            # and it's the second innings, then I've batted already
+            else:
+                if self.simulated_target is not None:
+                    self.bat_total = self.simulated_target
+                else:
+                    self.bat_total = state.target - 1
+                self.bat_wkts = 'N/A'
+                self.bat_bwl = 'bowl'
+                self.bwl_total = state.innings_runs
+                self.bwl_wkts = state.wickets_in_innings
+                self.bowler = ''
+                # self.onstrike = self.batting_order[1]
+                # self.onstrike.current_match_stats['batting_position_bat'] = 2
+                # self.offstrike = self.batting_order[2]
+                # self.offstrike.current_match_stats['batting_position_bat'] = 2
 
     def zero_all_stats(self):
         for b in self.bowlers.values():
